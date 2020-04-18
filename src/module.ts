@@ -1,37 +1,52 @@
 import { Constructor, ModuleOptions, DynamicModule } from "./types";
 import { ProviderRef } from "./provider";
-import {
-  MODULE_IMPORTS,
-  MODULE_EXPORTS,
-  MODULE_PROVIDER,
-} from "./meta/module.meta";
+import { MODULE_OPTIONS } from "./meta/module.meta";
 import { PROVIDER_DEPENDENCIES } from "./meta/provider.meta";
 
 export const MODULE_REF = Symbol("current_module");
 export const ROOT_MODULE_REF = Symbol("root_module");
-
 export class ModuleRef<T = any> {
   readonly providers = new Map<any, ProviderRef>();
   readonly exports = new Map<any, ProviderRef>();
   readonly importedProviders = new Map<any, ProviderRef>();
   readonly modules = new Map<Constructor, ModuleRef>();
+  readonly globals = new Set<ModuleRef>()
+  readonly root: ModuleRef
 
-  constructor(public name: string, public instance: T) {}
+  constructor(public name: string, public instance: T, root?: ModuleRef, readonly isGlobal = false) {
+    this.root = root || this;
+  }
 
-  async get<T>(provider: Constructor<T>): Promise<T>;
-  async get<T = any>(token: any): Promise<T>;
-  async get<T>(token: Constructor<T> | any): Promise<T> {
+  private async getGlobal<T = any>(token: any): Promise<ProviderRef<T> | void> {
+    for (const module of this.root.globals.values()) {
+      if (module.providers.has(token)) {
+        return module.providers.get(token)
+      }
+    }
+  }
+
+  async get<T>(token: Constructor<T> | any, required?: true): Promise<T>;
+  async get<T>(
+    token: Constructor<T> | any,
+    required: false
+  ): Promise<T | undefined>;
+  async get<T>(
+    token: Constructor<T> | any,
+    required = true
+  ): Promise<T | undefined> {
     const provider = this.providers.has(token)
       ? this.providers.get(token)
-      : this.importedProviders.get(token);
+      : this.importedProviders.has(token)
+        ? this.importedProviders.get(token)
+        : await this.getGlobal(token)
+      ;
 
-    if (provider === undefined) {
+    if (typeof provider !== 'undefined') return provider.get();
+    if (required) {
       throw new Error(
         `Provider ${token} not found in ${this.name} module context!`
       );
     }
-
-    return provider.get();
   }
 
   getModule<T = any>(module: Constructor<T>): ModuleRef<T> {
@@ -58,11 +73,7 @@ export class ModuleRef<T = any> {
     let ModuleConstructor: Constructor;
 
     if (typeof module === "function") {
-      options = {
-        imports: Reflect.getMetadata(MODULE_IMPORTS, module),
-        exports: Reflect.getMetadata(MODULE_EXPORTS, module),
-        providers: Reflect.getMetadata(MODULE_PROVIDER, module),
-      };
+      options = Reflect.getMetadata(MODULE_OPTIONS, module);
 
       ModuleConstructor = module;
     } else {
@@ -84,7 +95,10 @@ export class ModuleRef<T = any> {
         return depsA.includes(tokenB) ? -1 : 0;
       })
     );
-    const ref = new ModuleRef(ModuleConstructor.name, new ModuleConstructor());
+
+    const ref = new ModuleRef(ModuleConstructor.name, new ModuleConstructor(), root, options.global);
+    
+    root = root || ref;
 
     // Init Submodules
     for (const submodule of imports) {
@@ -104,20 +118,16 @@ export class ModuleRef<T = any> {
 
     ref.providers.set(
       ROOT_MODULE_REF,
-      new ProviderRef({ useValue: root || ref }, ref)
+      new ProviderRef({ useValue: root }, ref)
     );
 
     // Exports
     for (const provider of exportedProviders) {
-      const token =
-        typeof provider === "object" && provider.provide !== undefined
-          ? provider.provide
-          : provider;
-      if (!ref.providers.has(token)) {
-        throw new Error(`${token} not exists!`);
+      if (!ref.providers.has(provider)) {
+        throw new Error(`${provider} not exists!`);
       }
 
-      ref.exports.set(token, ref.providers.get(token) as ProviderRef);
+      ref.exports.set(provider, ref.providers.get(provider) as ProviderRef);
     }
 
     const moduleDeps =
@@ -125,8 +135,12 @@ export class ModuleRef<T = any> {
 
     for (let dep of moduleDeps) {
       if (dep.key) {
-        ref.instance[dep.key] = await ref.get(dep.token);
+        ref.instance[dep.key] = await ref.get(dep.token, dep.required);
       }
+    }
+
+    if (ref.isGlobal) {
+      root.globals.add(ref)
     }
 
     if (ref.instance.onModuleInit) {
