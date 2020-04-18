@@ -1,6 +1,6 @@
 # Injets
 
-TypeScript Dependency Injection using reflect-metadata, typescript ans ES7 feature.
+TypeScript Dependency Injection using reflect-metadata, typescript and ES7 feature.
 
 ## Installation
 
