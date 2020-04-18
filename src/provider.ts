@@ -1,6 +1,6 @@
 import { ProviderOptions, Constructor } from './types'
 import { ModuleRef } from './module'
-import { PROVIDER_SCOPE } from './meta/provider.meta'
+import { PROVIDER_SCOPE, PROVIDER_DEPENDENCIES } from './meta/provider.meta'
 
 export class ProviderRef<T = any> {
   private instance!: T
@@ -19,7 +19,7 @@ export class ProviderRef<T = any> {
           'SINGLETON'
       }
     } else {
-      this.options = optionsOrConstructor
+      this.options = Object.assign({ scope: 'SINGLETON' }, optionsOrConstructor)
     }
   }
 
@@ -38,12 +38,23 @@ export class ProviderRef<T = any> {
     }
 
     if (ProviderConstructor) {
-      const paramtypes =
-        Reflect.getMetadata('design:paramtypes', ProviderConstructor) || []
-      const args = await Promise.all(
-        paramtypes.map((p: any) => moduleRef.get(p))
-      )
-      return new ProviderConstructor(...args)
+      const depsList: { index?:number, key?:string | symbol, token: any }[] = (Reflect.getMetadata(PROVIDER_DEPENDENCIES, ProviderConstructor) || [])
+      const deps: any = {
+        params: [],
+        props: {}
+      }
+
+      for (const item of depsList) {
+        if (typeof item.index === 'number') {
+          deps.params[item.index] = await moduleRef.get(item.token)
+        } else if (item.key !== undefined) {
+          deps.props[item.key] = await moduleRef.get(item.token)
+        }
+      }
+
+      const instance = new ProviderConstructor(...deps.params);
+
+      return instance
     }
 
     return (optionsOrConstructor as ProviderOptions).useValue
@@ -53,7 +64,7 @@ export class ProviderRef<T = any> {
     if (typeof this.options.useFactory === 'function') {
       return this.options.useFactory()
     }
-
+    
     if (typeof this.options.useClass === 'function') {
       return ProviderRef.create(this.options, this.module)
     }
@@ -62,7 +73,7 @@ export class ProviderRef<T = any> {
   }
 
   async get(): Promise<T> {
-    if (!this.options.scope || this.options.scope === 'SINGLETON') {
+    if (this.options.scope === 'SINGLETON') {
       if (this.instance) return this.instance
       return (this.instance = await this.factory())
     }
