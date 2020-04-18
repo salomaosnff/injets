@@ -100,7 +100,6 @@ export class ModuleRef<T = any> {
       ref.providers.set(token, new ProviderRef(provider, ref))
     }
 
-    ref.providers.set(MODULE_REF, new ProviderRef({ useValue: ref }, ref))
     ref.providers.set(
       ROOT_MODULE_REF,
       new ProviderRef({ useValue: root || ref }, ref)
@@ -108,11 +107,20 @@ export class ModuleRef<T = any> {
 
     // Exports
     for (const provider of exportedProviders) {
-      if (!ref.providers.has(provider)) {
-        throw new Error(`${provider} not exists!`)
+      const token = (typeof provider === 'object' && provider.provide !== undefined) ? provider.provide : provider;
+      if (!ref.providers.has(token)) {
+        throw new Error(`${token} not exists!`)
       }
 
-      ref.exports.set(provider, ref.providers.get(provider) as ProviderRef)
+      ref.exports.set(token, ref.providers.get(token) as ProviderRef)
+    }
+
+    const moduleDeps = Reflect.getMetadata(PROVIDER_DEPENDENCIES, ModuleConstructor) || [];
+
+    for (let dep of moduleDeps) {
+      if (dep.key) {
+        ref.instance[dep.key] = await ref.get(dep.type)
+      }
     }
 
     if (ref.instance.onModuleInit) {

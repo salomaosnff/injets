@@ -2,10 +2,12 @@
     "compilerOptions": {
       "strict": true,
       "target": "ES2015",
-      "lib": ["ES7"],
+      "lib": ["ES7", "DOM"],
       "moduleResolution": "node",
       "outDir": "dist/",
       "sourceMap": true,
-      "declaration": true
+      "declaration": true,
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true
     }
   }
