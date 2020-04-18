@@ -1,7 +1,7 @@
 {
   "name": "injets",
   "version": "1.0.0",
-  "description": "TypeScript Dependency Injection using reflect-metadata and typescript with ES7",
+  "description": "TypeScript Dependency Injection using reflect-metadata, typescript and ES7 features",
   "main": "dist/index.js",
   "repository": "https://github.com/salomaosnff/injets.git",
   "author": "Salomao Neto <salomaosnff3@gmail.com>",
