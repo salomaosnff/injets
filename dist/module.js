@@ -8,28 +8,43 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { ProviderRef } from "./provider";
-import { MODULE_IMPORTS, MODULE_EXPORTS, MODULE_PROVIDER, } from "./meta/module.meta";
+import { MODULE_OPTIONS } from "./meta/module.meta";
 import { PROVIDER_DEPENDENCIES } from "./meta/provider.meta";
 export const MODULE_REF = Symbol("current_module");
 export const ROOT_MODULE_REF = Symbol("root_module");
 export class ModuleRef {
-    constructor(name, instance) {
+    constructor(name, instance, root, isGlobal = false) {
         this.name = name;
         this.instance = instance;
+        this.isGlobal = isGlobal;
         this.providers = new Map();
         this.exports = new Map();
         this.importedProviders = new Map();
         this.modules = new Map();
+        this.globals = new Set();
+        this.root = root || this;
     }
-    get(token) {
+    getGlobal(token) {
+        return __awaiter(this, void 0, void 0, function* () {
+            for (const module of this.root.globals.values()) {
+                if (module.providers.has(token)) {
+                    return module.providers.get(token);
+                }
+            }
+        });
+    }
+    get(token, required = true) {
         return __awaiter(this, void 0, void 0, function* () {
             const provider = this.providers.has(token)
                 ? this.providers.get(token)
-                : this.importedProviders.get(token);
-            if (provider === undefined) {
+                : this.importedProviders.has(token)
+                    ? this.importedProviders.get(token)
+                    : yield this.getGlobal(token);
+            if (typeof provider !== 'undefined')
+                return provider.get();
+            if (required) {
                 throw new Error(`Provider ${token} not found in ${this.name} module context!`);
             }
-            return provider.get();
         });
     }
     getModule(module) {
@@ -43,11 +58,7 @@ export class ModuleRef {
             let options;
             let ModuleConstructor;
             if (typeof module === "function") {
-                options = {
-                    imports: Reflect.getMetadata(MODULE_IMPORTS, module),
-                    exports: Reflect.getMetadata(MODULE_EXPORTS, module),
-                    providers: Reflect.getMetadata(MODULE_PROVIDER, module),
-                };
+                options = Reflect.getMetadata(MODULE_OPTIONS, module);
                 ModuleConstructor = module;
             }
             else {
@@ -63,7 +74,8 @@ export class ModuleRef {
                 const tokenB = typeof b === "function" ? b : b.provide;
                 return depsA.includes(tokenB) ? -1 : 0;
             }));
-            const ref = new ModuleRef(ModuleConstructor.name, new ModuleConstructor());
+            const ref = new ModuleRef(ModuleConstructor.name, new ModuleConstructor(), root, options.global);
+            root = root || ref;
             // Init Submodules
             for (const submodule of imports) {
                 const submoduleInstance = yield this.create(submodule, ref);
@@ -77,22 +89,22 @@ export class ModuleRef {
                 const token = typeof provider === "function" ? provider : provider.provide;
                 ref.providers.set(token, new ProviderRef(provider, ref));
             }
-            ref.providers.set(ROOT_MODULE_REF, new ProviderRef({ useValue: root || ref }, ref));
+            ref.providers.set(ROOT_MODULE_REF, new ProviderRef({ useValue: root }, ref));
             // Exports
             for (const provider of exportedProviders) {
-                const token = typeof provider === "object" && provider.provide !== undefined
-                    ? provider.provide
-                    : provider;
-                if (!ref.providers.has(token)) {
-                    throw new Error(`${token} not exists!`);
+                if (!ref.providers.has(provider)) {
+                    throw new Error(`${provider} not exists!`);
                 }
-                ref.exports.set(token, ref.providers.get(token));
+                ref.exports.set(provider, ref.providers.get(provider));
             }
             const moduleDeps = Reflect.getMetadata(PROVIDER_DEPENDENCIES, ModuleConstructor) || [];
             for (let dep of moduleDeps) {
                 if (dep.key) {
-                    ref.instance[dep.key] = yield ref.get(dep.token);
+                    ref.instance[dep.key] = yield ref.get(dep.token, dep.required);
                 }
+            }
+            if (ref.isGlobal) {
+                root.globals.add(ref);
             }
             if (ref.instance.onModuleInit) {
                 ref.instance.onModuleInit();

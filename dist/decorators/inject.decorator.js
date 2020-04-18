@@ -1,5 +1,5 @@
 import { PROVIDER_DEPENDENCIES } from "../meta/provider.meta";
-export function Inject(token) {
+export function Inject(token, options = { required: true }) {
     return function (target, key, index) {
         const deps = Reflect.getMetadata(PROVIDER_DEPENDENCIES, target.constructor) || [];
         token =
@@ -12,6 +12,7 @@ export function Inject(token) {
             key,
             index,
             token,
+            required: options.required
         }), typeof target === 'function' ? target : target.constructor);
     };
 }
