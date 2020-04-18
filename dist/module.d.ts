@@ -1,5 +1,5 @@
-import { Constructor, DynamicModule } from './types';
-import { ProviderRef } from './provider';
+import { Constructor, DynamicModule } from "./types";
+import { ProviderRef } from "./provider";
 export declare const MODULE_REF: unique symbol;
 export declare const ROOT_MODULE_REF: unique symbol;
 export declare class ModuleRef<T = any> {

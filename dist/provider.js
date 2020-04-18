@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { PROVIDER_SCOPE } from './meta/provider.meta';
+import { PROVIDER_SCOPE, PROVIDER_DEPENDENCIES } from './meta/provider.meta';
 export class ProviderRef {
     constructor(optionsOrConstructor, module) {
         this.module = module;
@@ -21,7 +21,7 @@ export class ProviderRef {
             };
         }
         else {
-            this.options = optionsOrConstructor;
+            this.options = Object.assign({ scope: 'SINGLETON' }, optionsOrConstructor);
         }
     }
     static create(optionsOrConstructor, moduleRef) {
@@ -37,9 +37,21 @@ export class ProviderRef {
                 return optionsOrConstructor.useFactory();
             }
             if (ProviderConstructor) {
-                const paramtypes = Reflect.getMetadata('design:paramtypes', ProviderConstructor) || [];
-                const args = yield Promise.all(paramtypes.map((p) => moduleRef.get(p)));
-                return new ProviderConstructor(...args);
+                const depsList = (Reflect.getMetadata(PROVIDER_DEPENDENCIES, ProviderConstructor) || []);
+                const deps = {
+                    params: [],
+                    props: {}
+                };
+                for (const item of depsList) {
+                    if (typeof item.index === 'number') {
+                        deps.params[item.index] = yield moduleRef.get(item.token);
+                    }
+                    else if (item.key !== undefined) {
+                        deps.props[item.key] = yield moduleRef.get(item.token);
+                    }
+                }
+                const instance = new ProviderConstructor(...deps.params);
+                return instance;
             }
             return optionsOrConstructor.useValue;
         });
@@ -55,7 +67,7 @@ export class ProviderRef {
     }
     get() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!this.options.scope || this.options.scope === 'SINGLETON') {
+            if (this.options.scope === 'SINGLETON') {
                 if (this.instance)
                     return this.instance;
                 return (this.instance = yield this.factory());

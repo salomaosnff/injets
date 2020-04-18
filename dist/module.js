@@ -7,11 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { ProviderRef } from './provider';
-import { MODULE_IMPORTS, MODULE_EXPORTS, MODULE_PROVIDER } from './meta/module.meta';
-import { PROVIDER_DEPENDENCIES } from './meta/provider.meta';
-export const MODULE_REF = Symbol('current_module');
-export const ROOT_MODULE_REF = Symbol('root_module');
+import { ProviderRef } from "./provider";
+import { MODULE_IMPORTS, MODULE_EXPORTS, MODULE_PROVIDER, } from "./meta/module.meta";
+import { PROVIDER_DEPENDENCIES } from "./meta/provider.meta";
+export const MODULE_REF = Symbol("current_module");
+export const ROOT_MODULE_REF = Symbol("root_module");
 export class ModuleRef {
     constructor(name, instance) {
         this.name = name;
@@ -23,10 +23,11 @@ export class ModuleRef {
     }
     get(token) {
         return __awaiter(this, void 0, void 0, function* () {
-            const provider = (this.providers.get(token) ||
-                this.importedProviders.get(token));
-            if (!provider) {
-                throw new Error(`Provider ${provider} not found in ${this.name} module context!`);
+            const provider = this.providers.has(token)
+                ? this.providers.get(token)
+                : this.importedProviders.get(token);
+            if (provider === undefined) {
+                throw new Error(`Provider ${token} not found in ${this.name} module context!`);
             }
             return provider.get();
         });
@@ -41,11 +42,11 @@ export class ModuleRef {
         return __awaiter(this, void 0, void 0, function* () {
             let options;
             let ModuleConstructor;
-            if (typeof module === 'function') {
+            if (typeof module === "function") {
                 options = {
                     imports: Reflect.getMetadata(MODULE_IMPORTS, module),
                     exports: Reflect.getMetadata(MODULE_EXPORTS, module),
-                    providers: Reflect.getMetadata(MODULE_PROVIDER, module)
+                    providers: Reflect.getMetadata(MODULE_PROVIDER, module),
                 };
                 ModuleConstructor = module;
             }
@@ -56,10 +57,10 @@ export class ModuleRef {
             const imports = new Set(options.imports || []);
             const exportedProviders = new Set(options.exports || []);
             const providers = new Set((options.providers || []).sort((a, b) => {
-                const depsA = typeof a === 'function'
+                const depsA = typeof a === "function"
                     ? Reflect.getMetadata(PROVIDER_DEPENDENCIES, a) || []
                     : [];
-                const tokenB = typeof b === 'function' ? b : b.provide;
+                const tokenB = typeof b === "function" ? b : b.provide;
                 return depsA.includes(tokenB) ? -1 : 0;
             }));
             const ref = new ModuleRef(ModuleConstructor.name, new ModuleConstructor());
@@ -73,17 +74,25 @@ export class ModuleRef {
             }
             // Init Providers
             for (const provider of providers) {
-                const token = typeof provider === 'function' ? provider : provider.provide;
+                const token = typeof provider === "function" ? provider : provider.provide;
                 ref.providers.set(token, new ProviderRef(provider, ref));
             }
-            ref.providers.set(MODULE_REF, new ProviderRef({ useValue: ref }, ref));
             ref.providers.set(ROOT_MODULE_REF, new ProviderRef({ useValue: root || ref }, ref));
             // Exports
             for (const provider of exportedProviders) {
-                if (!ref.providers.has(provider)) {
-                    throw new Error(`${provider} not exists!`);
+                const token = typeof provider === "object" && provider.provide !== undefined
+                    ? provider.provide
+                    : provider;
+                if (!ref.providers.has(token)) {
+                    throw new Error(`${token} not exists!`);
                 }
-                ref.exports.set(provider, ref.providers.get(provider));
+                ref.exports.set(token, ref.providers.get(token));
+            }
+            const moduleDeps = Reflect.getMetadata(PROVIDER_DEPENDENCIES, ModuleConstructor) || [];
+            for (let dep of moduleDeps) {
+                if (dep.key) {
+                    ref.instance[dep.key] = yield ref.get(dep.token);
+                }
             }
             if (ref.instance.onModuleInit) {
                 ref.instance.onModuleInit();

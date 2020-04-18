@@ -1,1 +1,1 @@
-export declare function Inject(): PropertyDecorator;
+export declare function Inject(token?: any): ParameterDecorator & PropertyDecorator;
