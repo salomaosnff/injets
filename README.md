@@ -28,25 +28,26 @@ yarn add injets
 
 ## Getting started
 
-To start using injets, you need to create a root module.
-All other modules are going to be attached to it.
+To start using injets, you have to create a `root module`.
+A `root module` is simply a starting point for your project, so all
+other modules are going to be attached to it.
 
-Register your provider in your module
+Here's how you can register a provider on the `root module`:
 
 ```typescript
 // hello-world.provider.ts
 import { Provider } from 'injets'
 
 @Provider()
-export class HelloProvider {
-    sayHello() {
-        console.log('Hello world!')
-    }
+export class HelloWorldProvider {
+  hello () {
+    console.log('Hello World!')
+  }
 }
 
 // app.module.ts
 import { Module } from 'injets';
-import { HelloProvider } from './hello.provider.ts'
+import { HelloProvider } from './hello-world.provider.ts'
 
 @Module({
     providers: [HelloProvider]
@@ -54,7 +55,9 @@ import { HelloProvider } from './hello.provider.ts'
 export class AppModule {}
 ```
 
-Instantiating the root module and calling providers
+To get your app up and running you first have to instantiate the `root module`.
+To do so, there's a static helper called `ModuleRef.create`.
+This is your entry point:
 
 ```typescript
 // index.js
@@ -63,15 +66,20 @@ import { AppModule } from './app.module.ts'
 
 async function main() {
     const app = await ModuleRef.create(AppModule)
-    const helloProvider = await app.get<HelloProvider>(HelloProvider)
+    const helloProvider = await app.get(HelloProvider)
 
-    console.log(helloProvider.hello())
+    // -> Hello World
+    helloProvider.hello()
 }
 
 main()
 ```
 
-Injecting providers into other providers
+Providers are entities that are responsible for executing the logic of your application.
+You often have to access logic from other parts of your app.
+
+To access another `Provider`, you simply have to declare its type
+on the current `Provider` constructor:
 
 ```typescript
 // provider1.provider.ts
@@ -79,13 +87,11 @@ import { Provider } from 'injets';
 
 @Provider()
 export class Provider1 {
-    printMessage(message: string) {
-        console.log('Provider 1 say:', message)
+    printMessage() {
+        console.log('Provider 1 says hello')
     }
 }
-```
 
-```typescript
 // provider2.provider.ts
 import { Provider } from 'injets';
 import { Provider1 } from './provider1.provider.ts'
@@ -96,12 +102,9 @@ export class Provider2 {
         public provider1: Provider1
     ) {}
 
-    getMessage() {
-        return 'Hello Provider 2!'
-    }
-
     getMessageAndPrint(message: string) {
-        this.provider1.printMessage(this.getMessage())
+      // -> Provider 1 says hello
+      this.provider1.printMessage()
     }
 }
 ```
