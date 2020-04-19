@@ -39,7 +39,7 @@ other modules are going to be attached to it.
 Here's how you can register a provider on the `root module`:
 
 ```typescript
-// hello-world.provider.ts
+// --- hello-world.provider.ts ---
 import { Provider } from 'injets'
 
 @Provider()
@@ -49,7 +49,7 @@ export class HelloWorldProvider {
   }
 }
 
-// app.module.ts
+// --- app.module.ts ---
 import { Module } from 'injets';
 import { HelloProvider } from './hello-world.provider.ts'
 
@@ -66,7 +66,7 @@ To do so, there's a static helper called `ModuleRef.create`.
 This is your entry point:
 
 ```typescript
-// index.js
+// --- index.js ---
 import { ModuleRef } from 'injets'
 import { AppModule } from './app.module.ts'
 
@@ -90,7 +90,7 @@ To access another [Provider](#providers), you can simply declare its type
 on the current [Provider](#providers) constructor:
 
 ```typescript
-// app.module.ts
+// --- app.module.ts ---
 import { Module } from 'injets';
 import { LogProvider } from './log.provider.ts'
 import { HttpProvider } from './http.provider.ts'
@@ -100,7 +100,7 @@ import { HttpProvider } from './http.provider.ts'
 })
 export class AppModule {}
 
-// http.provider.ts
+// --- http.provider.ts ---
 import { Provider } from 'injets';
 import { LogProvider } from './log.provider.ts'
 
