@@ -16,6 +16,8 @@ to make your code more organized.
 
 - [Installation](#installation)
 - [Getting Started](#getting-started)
+  - [Instantiating the root module](#instantiating-the-root-module)
+  - [Accessing Providers](#accessing-providers)
 - [Documentation](#documentation)
 
 ## Installation
@@ -29,7 +31,7 @@ yarn add injets
 
 ## Getting started
 
-To start using injets, you have to create a `root module`.
+To start using injets, you first have to create a `root module`.
 
 A `root module` is simply a starting point for your project, so all
 other modules are going to be attached to it.
@@ -57,6 +59,8 @@ import { HelloProvider } from './hello-world.provider.ts'
 export class AppModule {}
 ```
 
+### Instantiating the root module
+
 To get your app up and running you first have to instantiate the `root module`.
 To do so, there's a static helper called `ModuleRef.create`.
 This is your entry point:
@@ -77,11 +81,13 @@ async function main() {
 main()
 ```
 
+### Accessing Providers
+
 Providers are entities that are responsible for executing the logic of your application.
 You often have to access logic from other parts of your app.
 
-To access another `Provider`, you can simply declare its type
-on the current `Provider` constructor:
+To access another [Provider](#providers), you can simply declare its type
+on the current [Provider](#providers) constructor:
 
 ```typescript
 // app.module.ts
@@ -147,7 +153,7 @@ export class MyModule {
 
 ## Providers
 
-A provider can be anything you want to use anywhere in your application, but they are generally used to provide business logic methods for your application.
+A provider can be anything you want to use anywhere in your application, but they are generally used to provide business logic methods for your app.
 
 ### Structure of a provider
 
