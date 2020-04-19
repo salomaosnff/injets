@@ -3,33 +3,23 @@ import { ProviderRef } from "./provider";
 import { MODULE_OPTIONS } from "./meta/module.meta";
 import { PROVIDER_DEPENDENCIES } from "./meta/provider.meta";
 
-export const MODULE_REF = Symbol("current_module");
-export const ROOT_MODULE_REF = Symbol("root_module");
 export class ModuleRef<T = any> {
   readonly providers = new Map<any, ProviderRef>();
-  readonly exports = new Map<any, ProviderRef>();
+  readonly exports = new Set<any>();
   readonly importedProviders = new Map<any, ProviderRef>();
   readonly modules = new Map<Constructor, ModuleRef>();
-  readonly globals = new Set<ModuleRef>()
-  readonly root: ModuleRef
+  readonly globalProviders = new Map<any, ProviderRef>();
+  readonly root: ModuleRef;
 
-  constructor(public name: string, public instance: T, root?: ModuleRef, readonly isGlobal = false) {
+  constructor(
+    public name: string,
+    public instance: T,
+    root?: ModuleRef,
+    readonly isGlobal = false
+  ) {
     this.root = root || this;
   }
 
-  private async getGlobal<T = any>(token: any): Promise<ProviderRef<T> | void> {
-    for (const module of this.root.globals.values()) {
-      if (module.providers.has(token)) {
-        return module.providers.get(token)
-      }
-    }
-  }
-
-  async get<T>(token: Constructor<T> | any, required?: true): Promise<T>;
-  async get<T>(
-    token: Constructor<T> | any,
-    required: false
-  ): Promise<T | undefined>;
   async get<T>(
     token: Constructor<T> | any,
     required = true
@@ -37,11 +27,9 @@ export class ModuleRef<T = any> {
     const provider = this.providers.has(token)
       ? this.providers.get(token)
       : this.importedProviders.has(token)
-        ? this.importedProviders.get(token)
-        : await this.getGlobal(token)
-      ;
-
-    if (typeof provider !== 'undefined') return provider.get();
+      ? this.importedProviders.get(token)
+      : this.root.globalProviders.get(token);
+    if (typeof provider !== "undefined") return provider.get();
     if (required) {
       throw new Error(
         `Provider ${token} not found in ${this.name} module context!`
@@ -82,7 +70,6 @@ export class ModuleRef<T = any> {
     }
 
     const imports = new Set(options.imports || []);
-    const exportedProviders = new Set(options.exports || []);
     const providers = new Set(
       (options.providers || []).sort((a, b) => {
         const depsA: any[] =
@@ -96,8 +83,16 @@ export class ModuleRef<T = any> {
       })
     );
 
-    const ref = new ModuleRef(ModuleConstructor.name, new ModuleConstructor(), root, options.global);
-    
+    const ref = new ModuleRef(
+      ModuleConstructor.name,
+      new ModuleConstructor(),
+      root,
+      options.global
+    );
+
+    // Exports
+    new Set(options.exports || []).forEach(token => ref.exports.add(token))
+
     root = root || ref;
 
     // Init Submodules
@@ -116,33 +111,27 @@ export class ModuleRef<T = any> {
       ref.providers.set(token, new ProviderRef(provider, ref));
     }
 
-    ref.providers.set(
-      ROOT_MODULE_REF,
-      new ProviderRef({ useValue: root }, ref)
-    );
-
-    // Exports
-    for (const provider of exportedProviders) {
-      if (!ref.providers.has(provider)) {
-        throw new Error(`${provider} not exists!`);
+    // Globals
+    if (ref.isGlobal) {
+      for (const token of ref.exports) {
+        ref.root.globalProviders.set(
+          token,
+          ref.providers.get(token) as ProviderRef
+        );
       }
-
-      ref.exports.set(provider, ref.providers.get(provider) as ProviderRef);
     }
 
     const moduleDeps =
       Reflect.getMetadata(PROVIDER_DEPENDENCIES, ModuleConstructor) || [];
 
+    // Properties dependencies
     for (let dep of moduleDeps) {
       if (dep.key) {
         ref.instance[dep.key] = await ref.get(dep.token, dep.required);
       }
     }
 
-    if (ref.isGlobal) {
-      root.globals.add(ref)
-    }
-
+    // On Module Init
     if (ref.instance.onModuleInit) {
       ref.instance.onModuleInit();
     }

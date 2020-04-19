@@ -7,47 +7,47 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { PROVIDER_SCOPE, PROVIDER_DEPENDENCIES } from './meta/provider.meta';
+import { PROVIDER_SCOPE, PROVIDER_DEPENDENCIES } from "./meta/provider.meta";
 export class ProviderRef {
     constructor(optionsOrConstructor, module) {
         this.module = module;
         this.options = {};
-        if (typeof optionsOrConstructor === 'function') {
+        if (typeof optionsOrConstructor === "function") {
             this.options = {
                 useClass: optionsOrConstructor,
                 provide: optionsOrConstructor,
                 scope: Reflect.getMetadata(PROVIDER_SCOPE, optionsOrConstructor) ||
-                    'SINGLETON'
+                    "SINGLETON",
             };
         }
         else {
-            this.options = Object.assign({ scope: 'SINGLETON' }, optionsOrConstructor);
+            this.options = Object.assign({ scope: "SINGLETON" }, optionsOrConstructor);
         }
     }
     static create(optionsOrConstructor, moduleRef) {
         return __awaiter(this, void 0, void 0, function* () {
             let ProviderConstructor;
-            if (typeof optionsOrConstructor === 'function') {
+            if (typeof optionsOrConstructor === "function") {
                 ProviderConstructor = optionsOrConstructor;
             }
-            else if (typeof optionsOrConstructor.useClass === 'function') {
+            else if (typeof optionsOrConstructor.useClass === "function") {
                 ProviderConstructor = optionsOrConstructor.useClass;
             }
-            else if (typeof optionsOrConstructor.useFactory === 'function') {
+            else if (typeof optionsOrConstructor.useFactory === "function") {
                 return optionsOrConstructor.useFactory();
             }
             if (ProviderConstructor) {
-                const depsList = (Reflect.getMetadata(PROVIDER_DEPENDENCIES, ProviderConstructor) || []);
+                const depsList = Reflect.getMetadata(PROVIDER_DEPENDENCIES, ProviderConstructor) || [];
                 const deps = {
                     params: [],
-                    props: {}
+                    props: {},
                 };
                 for (const item of depsList) {
-                    if (typeof item.index === 'number') {
-                        deps.params[item.index] = yield moduleRef.get(item.token);
+                    if (typeof item.index === "number") {
+                        deps.params[item.index] = yield moduleRef.get(item.token, item.required);
                     }
                     else if (item.key !== undefined) {
-                        deps.props[item.key] = yield moduleRef.get(item.token);
+                        deps.props[item.key] = yield moduleRef.get(item.token, item.required);
                     }
                 }
                 const instance = new ProviderConstructor(...deps.params);
@@ -57,17 +57,17 @@ export class ProviderRef {
         });
     }
     factory() {
-        if (typeof this.options.useFactory === 'function') {
+        if (typeof this.options.useFactory === "function") {
             return this.options.useFactory();
         }
-        if (typeof this.options.useClass === 'function') {
+        if (typeof this.options.useClass === "function") {
             return ProviderRef.create(this.options, this.module);
         }
         return this.options.useValue;
     }
     get() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.options.scope === 'SINGLETON') {
+            if (this.options.scope === "SINGLETON") {
                 if (this.instance)
                     return this.instance;
                 return (this.instance = yield this.factory());
