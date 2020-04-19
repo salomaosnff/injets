@@ -8,7 +8,8 @@
 
 **🏢 Singletons and Transient providers**: Create singletons just by specifying a single flag, and don't bother when you should instantiate your classes anymore.
 
-Injets is a TypeScript Dependency Injection library that uses reflect-metadata and annotations
+Injets is a TypeScript Dependency Injection library inspired by [NestJS](https://nestjs.com/)
+that uses reflect-metadata and annotations
 to make your code more organized.
 
 ## Table of Contents
@@ -29,6 +30,7 @@ yarn add injets
 ## Getting started
 
 To start using injets, you have to create a `root module`.
+
 A `root module` is simply a starting point for your project, so all
 other modules are going to be attached to it.
 
@@ -78,63 +80,39 @@ main()
 Providers are entities that are responsible for executing the logic of your application.
 You often have to access logic from other parts of your app.
 
-To access another `Provider`, you simply have to declare its type
+To access another `Provider`, you can simply declare its type
 on the current `Provider` constructor:
-
-```typescript
-// provider1.provider.ts
-import { Provider } from 'injets';
-
-@Provider()
-export class Provider1 {
-    printMessage() {
-        console.log('Provider 1 says hello')
-    }
-}
-
-// provider2.provider.ts
-import { Provider } from 'injets';
-import { Provider1 } from './provider1.provider.ts'
-
-@Provider()
-export class Provider2 {
-    constructor(
-        public provider1: Provider1
-    ) {}
-
-    getMessageAndPrint(message: string) {
-      // -> Provider 1 says hello
-      this.provider1.printMessage()
-    }
-}
-```
 
 ```typescript
 // app.module.ts
 import { Module } from 'injets';
-import { Provider1 } from './provider1.provider.ts'
-import { Provider2 } from './provider2.provider.ts'
+import { LogProvider } from './log.provider.ts'
+import { HttpProvider } from './http.provider.ts'
 
 @Module({
-    providers: [Provider1, Provider2]
+    providers: [HelloProvider, HttpProvider]
 })
 export class AppModule {}
-```
 
-```typescript
-// index.js
-import { ModuleRef } from 'injets'
-import { AppModule } from './app.module.ts'
-import { Provider2 } from './provider2.provider.ts'
+// http.provider.ts
+import { Provider } from 'injets';
+import { LogProvider } from './log.provider.ts'
 
-async function main() {
-    const app = await ModuleRef.create(AppModule)
-    const myProvider = await app.get<Provider2>(Provider2)
+@Provider()
+export class HttpProvider {
+    constructor(
+        public logProvider: LogProvider
+    ) {}
 
-    myProvider.getMessageAndPrint()
+    async sendRequest(message: string) {
+      try {
+        await fetch('https://my-api.com')
+        this.logProvider.success('Request was sent 🚀')
+      } catch (error) {
+        this.logProvider.error('Error while sending request ❌', error)
+      }
+    }
 }
-
-main()
 ```
 
 ## Documentation
