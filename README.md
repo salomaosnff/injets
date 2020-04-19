@@ -3,7 +3,9 @@
 # Injets
 
 **💉 Dependency Injection**: Organize your code in [modules](#modules) and inject [providers](#providers) in other modules.
+
 **✏️ Annotations**:  Use annotations in your module classes to make your dependecy flow easier to understand.
+
 **🏢 Singletons and Transient providers**: Create singletons just by specifying a single flag, and don't bother when you should instantiate your classes anymore.
 
 Injets is a TypeScript Dependency Injection library that uses reflect-metadata and annotations
@@ -148,7 +150,7 @@ Modules are a group of providers, your application must have at least one module
 ```typescript
 @Module({
     // List of modules that will be imported into this module
-    imports: [], 
+    imports: [],
     // providers that will be registered in this module
     providers: [],
     // providers of this module that can be used in other modules where this module was imported
