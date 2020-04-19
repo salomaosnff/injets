@@ -1,10 +1,10 @@
 import { PROVIDER_DEPENDENCIES } from "../meta/provider.meta";
 
 interface InjectOptions {
-  required?:boolean
+  required?: boolean;
 }
 export function Inject(token?: any, options: InjectOptions = { required: true }): ParameterDecorator & PropertyDecorator {
-  return function (target: Object, key: string | symbol, index?: number) {
+  return function (target: Record<string, any>, key: string | symbol, index?: number) {
     const deps =
       Reflect.getMetadata(PROVIDER_DEPENDENCIES, target.constructor) || [];
 

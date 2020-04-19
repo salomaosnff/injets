@@ -13,7 +13,7 @@ class GlobalModule {}
 
 @Provider()
 class Provider1 {
-  constructor (@Inject('NUMBER') n:number) {
+  constructor (@Inject('NUMBER') n: number) {
     console.log(n)
   }
 }

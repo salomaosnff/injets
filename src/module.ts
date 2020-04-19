@@ -132,7 +132,7 @@ export class ModuleRef<T = any> {
     const moduleDeps =
       Reflect.getMetadata(PROVIDER_DEPENDENCIES, ModuleConstructor) || [];
 
-    for (let dep of moduleDeps) {
+    for (const dep of moduleDeps) {
       if (dep.key) {
         ref.instance[dep.key] = await ref.get(dep.token, dep.required);
       }
