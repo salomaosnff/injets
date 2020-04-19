@@ -1,9 +1,13 @@
 {
+    "include": [
+      "src/**/*"
+    ],
     "compilerOptions": {
       "strict": true,
       "target": "ES2015",
       "lib": ["ES7", "DOM"],
       "moduleResolution": "node",
+      "esModuleInterop": true,
       "outDir": "dist/",
       "sourceMap": true,
       "declaration": true,
