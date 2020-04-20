@@ -1,8 +1,28 @@
+[![npm version](https://badge.fury.io/js/injets.svg)](https://badge.fury.io/js/injets)
+
 # Injets
 
-TypeScript Dependency Injection using reflect-metadata, typescript and ES7 feature.
+**💉 Dependency Injection**: Organize your code in [modules](#modules) and inject [providers](#providers) in other modules.
+
+**✏️ Annotations**:  Use annotations in your module classes to make your dependecy flow easier to understand.
+
+**🏢 Singletons and Transient providers**: Create singletons just by specifying a single flag, and don't bother when you should instantiate your classes anymore.
+
+Injets is a TypeScript Dependency Injection library inspired by [NestJS](https://nestjs.com/)
+that uses reflect-metadata and annotations
+to make your code more organized.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Getting Started](#getting-started)
+  - [Instantiating the root module](#instantiating-the-root-module)
+  - [Accessing Providers](#accessing-providers)
+- [Documentation](#documentation)
 
 ## Installation
+
+using [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 
 ```bash
 npm i injets
@@ -10,35 +30,28 @@ yarn add injets
 ```
 
 ## Getting started
-To start using injets, you need to create at least one module.
+
+To start using injets, you first have to create a `root module`.
+
+A `root module` is simply a starting point for your project, so all
+other modules are going to be attached to it.
+
+Here's how you can register a provider on the `root module`:
 
 ```typescript
-// app.module.ts
-import { Module } from 'injets';
-
-@Module({})
-export class AppModule {}
-```
-
-Create your first provider
-
-```typescript
-// hello.provider.ts
-import { Provider } from 'injets';
+// --- hello-world.provider.ts ---
+import { Provider } from 'injets'
 
 @Provider()
-export class HelloProvider {
-    hello() {
-        return 'Hello World!'
-    }
+export class HelloWorldProvider {
+  hello () {
+    console.log('Hello World!')
+  }
 }
-```
 
-Register your provider in your module
-```typescript
-// app.module.ts
+// --- app.module.ts ---
 import { Module } from 'injets';
-import { HelloProvider } from './hello.provider.ts'
+import { HelloProvider } from './hello-world.provider.ts'
 
 @Module({
     providers: [HelloProvider]
@@ -46,93 +59,85 @@ import { HelloProvider } from './hello.provider.ts'
 export class AppModule {}
 ```
 
-Instantiating the root module and calling providers
+### Instantiating the root module
+
+To get your app up and running you first have to instantiate the `root module`.
+To do so, there's a static helper called `ModuleRef.create`.
+This is your entry point:
 
 ```typescript
-// index.js
+// --- index.js ---
 import { ModuleRef } from 'injets'
 import { AppModule } from './app.module.ts'
 
 async function main() {
     const app = await ModuleRef.create(AppModule)
-    const helloProvider = await app.get<HelloProvider>(HelloProvider)
-    
-    console.log(helloProvider.hello())
+    const helloProvider = await app.get(HelloProvider)
+
+    // -> Hello World
+    helloProvider.hello()
 }
 
 main()
 ```
 
-Injecting providers into other providers
+### Accessing Providers
+
+Providers are entities that are responsible for executing the logic of your application.
+You often have to access logic from other parts of your app.
+
+To access another [Provider](#providers), you can simply declare its type
+on the current [Provider](#providers) constructor:
 
 ```typescript
-// provider1.provider.ts
-import { Provider } from 'injets';
-
-@Provider()
-export class Provider1 {
-    printMessage(message: string) {
-        console.log('Provider 1 say:', message)
-    }
-}
-```
-```typescript
-// provider2.provider.ts
-import { Provider } from 'injets';
-import { Provider1 } from './provider1.provider.ts'
-
-@Provider()
-export class Provider2 {
-    constructor(
-        public provider1: Provider1
-    ) {}
-
-    getMessage() {
-        return 'Hello Provider 2!'
-    }
-
-    getMessageAndPrint(message: string) {
-        this.provider1.printMessage(this.getMessage())
-    }
-}
-```
-
-```typescript
-// app.module.ts
+// --- app.module.ts ---
 import { Module } from 'injets';
-import { Provider1 } from './provider1.provider.ts'
-import { Provider2 } from './provider2.provider.ts'
+import { LogProvider } from './log.provider.ts'
+import { HttpProvider } from './http.provider.ts'
 
 @Module({
-    providers: [Provider1, Provider2]
+    providers: [HelloProvider, HttpProvider]
 })
 export class AppModule {}
-```
 
-```typescript
-// index.js
-import { ModuleRef } from 'injets'
-import { AppModule } from './app.module.ts'
-import { Provider2 } from './provider2.provider.ts'
+// --- http.provider.ts ---
+import { Provider } from 'injets';
+import { LogProvider } from './log.provider.ts'
 
-async function main() {
-    const app = await ModuleRef.create(AppModule)
-    const myProvider = await app.get<Provider2>(Provider2)
-    
-    myProvider.getMessageAndPrint()
+@Provider()
+export class HttpProvider {
+    constructor(
+        public logProvider: LogProvider
+    ) {}
+
+    async sendRequest(message: string) {
+      try {
+        await fetch('https://my-api.com')
+        this.logProvider.success('Request was sent 🚀')
+      } catch (error) {
+        this.logProvider.error('Error while sending request ❌', error)
+      }
+    }
 }
-
-main()
 ```
+
+## Documentation
+
+- [Modules](#modules)
+  - [Structure of a module](#structure-of-a-module)
+- [Providers](#providers)
+  - [Structure of a provider](#structure-of-a-provider)
 
 ## Modules
+
 Modules are a group of providers, your application must have at least one module (root module).
 
 ### Structure of a module
+
 ```typescript
 @Module({
     // List of modules that will be imported into this module
-    imports: [], 
+    imports: [],
     // providers that will be registered in this module
     providers: [],
     // providers of this module that can be used in other modules where this module was imported
@@ -148,7 +153,7 @@ export class MyModule {
 
 ## Providers
 
-A provider can be anything you want to use anywhere in your application, but they are generally used to provide business logic methods for your application.
+A provider can be anything you want to use anywhere in your application, but they are generally used to provide business logic methods for your app.
 
 ### Structure of a provider
 

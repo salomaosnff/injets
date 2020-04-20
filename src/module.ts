@@ -2,6 +2,7 @@ import { Constructor, ModuleOptions, DynamicModule } from "./types";
 import { ProviderRef } from "./provider";
 import { MODULE_OPTIONS } from "./meta/module.meta";
 import { PROVIDER_DEPENDENCIES } from "./meta/provider.meta";
+import { ProviderNotFoundError } from "./errors/module.errors";
 
 export class ModuleRef<T = any> {
   readonly providers = new Map<any, ProviderRef>();
@@ -31,9 +32,7 @@ export class ModuleRef<T = any> {
       : this.root.globalProviders.get(token);
     if (typeof provider !== "undefined") return provider.get();
     if (required) {
-      throw new Error(
-        `Provider ${token} not found in ${this.name} module context!`
-      );
+      throw new ProviderNotFoundError(token, this.name);
     }
   }
 
@@ -83,15 +82,7 @@ export class ModuleRef<T = any> {
       })
     );
 
-    const ref = new ModuleRef(
-      ModuleConstructor.name,
-      new ModuleConstructor(),
-      root,
-      options.global
-    );
-
-    // Exports
-    new Set(options.exports || []).forEach(token => ref.exports.add(token))
+    const ref = new ModuleRef(ModuleConstructor.name, new ModuleConstructor(), root, options.global);
 
     root = root || ref;
 
@@ -124,8 +115,7 @@ export class ModuleRef<T = any> {
     const moduleDeps =
       Reflect.getMetadata(PROVIDER_DEPENDENCIES, ModuleConstructor) || [];
 
-    // Properties dependencies
-    for (let dep of moduleDeps) {
+    for (const dep of moduleDeps) {
       if (dep.key) {
         ref.instance[dep.key] = await ref.get(dep.token, dep.required);
       }

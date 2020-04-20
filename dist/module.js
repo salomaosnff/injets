@@ -10,6 +10,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { ProviderRef } from "./provider";
 import { MODULE_OPTIONS } from "./meta/module.meta";
 import { PROVIDER_DEPENDENCIES } from "./meta/provider.meta";
+import { ProviderNotFoundError } from "./errors/module.errors";
+export const MODULE_REF = Symbol("current_module");
+export const ROOT_MODULE_REF = Symbol("root_module");
 export class ModuleRef {
     constructor(name, instance, root, isGlobal = false) {
         this.name = name;
@@ -32,7 +35,7 @@ export class ModuleRef {
             if (typeof provider !== "undefined")
                 return provider.get();
             if (required) {
-                throw new Error(`Provider ${token} not found in ${this.name} module context!`);
+                throw new ProviderNotFoundError(token, this.name);
             }
         });
     }
@@ -86,8 +89,7 @@ export class ModuleRef {
                 }
             }
             const moduleDeps = Reflect.getMetadata(PROVIDER_DEPENDENCIES, ModuleConstructor) || [];
-            // Properties dependencies
-            for (let dep of moduleDeps) {
+            for (const dep of moduleDeps) {
                 if (dep.key) {
                     ref.instance[dep.key] = yield ref.get(dep.token, dep.required);
                 }
