@@ -22,60 +22,43 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import "reflect-metadata";
 import { Module } from "./decorators/module.decorator";
 import { Inject } from "./decorators/inject.decorator";
-import { ModuleRef } from "./module";
 import { Provider } from "./decorators";
-let ConfigModule = class ConfigModule {
-    static forRoot(config) {
-        const providers = [
-            {
-                provide: "CONFIG",
-                useFactory: () => __awaiter(this, void 0, void 0, function* () { return (Object.assign(Object.assign({}, config), { isFactory: false })); }),
-            },
-            {
-                provide: "CONFIG_FACTORY",
-                useFactory: () => __awaiter(this, void 0, void 0, function* () { return (Object.assign(Object.assign({}, config), { isFactory: true })); }),
-            },
-        ];
-        return {
-            module: this,
-            providers,
-            exports: providers,
-        };
+import { ModuleRef } from "./module";
+let GlobalModule = class GlobalModule {
+};
+GlobalModule = __decorate([
+    Module({
+        global: true,
+        providers: [{ provide: 'NUMBER', useValue: 5 }]
+    })
+], GlobalModule);
+let Provider1 = class Provider1 {
+    constructor(n) {
+        console.log(n);
     }
 };
-ConfigModule = __decorate([
-    Module({})
-], ConfigModule);
-let MyProvider = class MyProvider {
-    constructor(config2) {
-        console.log("My Provider!", this.config, config2);
-    }
-};
-__decorate([
-    Inject("CONFIG_FACTORY"),
-    __metadata("design:type", Object)
-], MyProvider.prototype, "config", void 0);
-MyProvider = __decorate([
+Provider1 = __decorate([
     Provider(),
-    __param(0, Inject("CONFIG")),
-    __metadata("design:paramtypes", [Object])
-], MyProvider);
-let AppModule = class AppModule {
-    onModuleInit() {
-        console.log("Module ready!", this.config);
-    }
+    __param(0, Inject('NUMBER')),
+    __metadata("design:paramtypes", [Number])
+], Provider1);
+let NoGlobalModule = class NoGlobalModule {
 };
-__decorate([
-    Inject("CONFIG_FACTORY"),
-    __metadata("design:type", Object)
-], AppModule.prototype, "config", void 0);
+NoGlobalModule = __decorate([
+    Module({
+        providers: [Provider1]
+    })
+], NoGlobalModule);
+let AppModule = class AppModule {
+};
 AppModule = __decorate([
     Module({
-        imports: [ConfigModule.forRoot({ username: "root", password: "123" })],
-        providers: [MyProvider],
+        imports: [GlobalModule, NoGlobalModule]
     })
 ], AppModule);
-ModuleRef.create(AppModule).then((app) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("Ready!", yield app.get(MyProvider));
+export { AppModule };
+ModuleRef.create(AppModule).then((mod) => __awaiter(void 0, void 0, void 0, function* () {
+    const p = yield mod.getModule(NoGlobalModule).get(Provider1);
+    console.log(p);
 }));
-//# sourceMappingURL=test.js.map
+//# sourceMappingURL=foo.js.map

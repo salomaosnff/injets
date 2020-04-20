@@ -38,7 +38,7 @@ export class ProviderRef<T = any> {
     }
 
     if (ProviderConstructor) {
-      const depsList: { index?:number, key?:string | symbol, token: any }[] = (Reflect.getMetadata(PROVIDER_DEPENDENCIES, ProviderConstructor) || [])
+      const depsList: { index?: number; key?: string | symbol; token: any }[] = (Reflect.getMetadata(PROVIDER_DEPENDENCIES, ProviderConstructor) || [])
       const deps: any = {
         params: [],
         props: {}
