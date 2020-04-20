@@ -3,7 +3,7 @@ export interface ModuleOptions {
     global?: boolean;
     imports?: any[];
     providers?: Array<Constructor | ProviderOptions>;
-    exports?: any[];
+    exports?: Array<Constructor | ProviderOptions>;
 }
 export interface DynamicModule extends ModuleOptions {
     module: Constructor;

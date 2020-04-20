@@ -11,8 +11,6 @@ import { ProviderRef } from "./provider";
 import { MODULE_OPTIONS } from "./meta/module.meta";
 import { PROVIDER_DEPENDENCIES } from "./meta/provider.meta";
 import { ProviderNotFoundError } from "./errors/module.errors";
-export const MODULE_REF = Symbol("current_module");
-export const ROOT_MODULE_REF = Symbol("root_module");
 export class ModuleRef {
     constructor(name, instance, root, isGlobal = false) {
         this.name = name;
@@ -66,8 +64,6 @@ export class ModuleRef {
                 return depsA.includes(tokenB) ? -1 : 0;
             }));
             const ref = new ModuleRef(ModuleConstructor.name, new ModuleConstructor(), root, options.global);
-            // Exports
-            new Set(options.exports || []).forEach(token => ref.exports.add(token));
             root = root || ref;
             // Init Submodules
             for (const submodule of imports) {
