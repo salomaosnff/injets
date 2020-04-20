@@ -1,6 +1,7 @@
 import { ProviderOptions, Constructor } from './types'
 import { ModuleRef } from './module'
 import { PROVIDER_SCOPE, PROVIDER_DEPENDENCIES } from './meta/provider.meta'
+import { ProviderNotImportedError } from './errors/provider.errors'
 
 export class ProviderRef<T = any> {
   private instance!: T
@@ -20,6 +21,24 @@ export class ProviderRef<T = any> {
       }
     } else {
       this.options = Object.assign({ scope: 'SINGLETON' }, optionsOrConstructor)
+    }
+  }
+
+  private static checkIfHasAllConstructorParams (ProviderConstructor: Constructor, params: any[]) {
+    const paramConstructorToParamInstance = new WeakMap<Constructor, any>()
+    for (const param of params) {
+      param?.constructor && paramConstructorToParamInstance.set(param.constructor, param)
+    }
+
+    const constructorParams = Reflect.getMetadata('design:paramtypes', ProviderConstructor)
+    if (!constructorParams) {
+      return
+    }
+
+    for (const param of constructorParams) {
+      if (typeof param === 'function' && !paramConstructorToParamInstance.get(param)) {
+        throw new ProviderNotImportedError(ProviderConstructor, param)
+      }
     }
   }
 
@@ -52,6 +71,7 @@ export class ProviderRef<T = any> {
         }
       }
 
+      this.checkIfHasAllConstructorParams(ProviderConstructor, deps.params)
       const instance = new ProviderConstructor(...deps.params);
 
       return instance
@@ -64,7 +84,7 @@ export class ProviderRef<T = any> {
     if (typeof this.options.useFactory === 'function') {
       return this.options.useFactory()
     }
-    
+
     if (typeof this.options.useClass === 'function') {
       return ProviderRef.create(this.options, this.module)
     }

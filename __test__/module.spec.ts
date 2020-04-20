@@ -1,6 +1,7 @@
 import { Module, ModuleRef, Provider, Inject } from '../src'
 import 'reflect-metadata'
 import { ProviderNotFoundError } from '../src/errors/module.errors'
+import { ProviderNotImportedError } from '../src/errors/provider.errors'
 
 describe('testing module', () => {
   it('can access providers inside itself', async () => {
@@ -56,5 +57,22 @@ describe('testing module', () => {
     }
 
     expect(ModuleRef.create(TestModule)).rejects.toBeInstanceOf(ProviderNotFoundError)
+  })
+
+  it('cannot inject a private provider on the constructor of another provider', async () => {
+    @Provider()
+    class PrivateProvider {}
+
+    @Provider()
+    class TestProvider {
+      constructor (public privateProvider: PrivateProvider) {}
+    }
+
+    @Module({ providers: [TestProvider] })
+    class TestModule {
+      @Inject() testProvider!: TestProvider
+    }
+
+    expect(ModuleRef.create(TestModule)).rejects.toBeInstanceOf(ProviderNotImportedError)
   })
 })
