@@ -1,5 +1,5 @@
-import { ProviderOptions, Constructor } from './types';
-import { ModuleRef } from './module';
+import { ProviderOptions, Constructor } from "./types";
+import { ModuleRef } from "./module";
 export declare class ProviderRef<T = any> {
     private module;
     private instance;

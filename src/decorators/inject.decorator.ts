@@ -21,9 +21,13 @@ export function Inject(token?: any, options: InjectOptions = { required: true })
         key,
         index,
         token,
-        required: options.required
+        required: options.required,
       }),
-      typeof target === 'function' ? target : target.constructor
+      typeof target === "function" ? target : target.constructor
     );
   };
+}
+
+export function InjectOptional(token?: any) {
+  return Inject(token, { required: false });
 }

@@ -12,8 +12,11 @@ export function Inject(token, options = { required: true }) {
             key,
             index,
             token,
-            required: options.required
-        }), typeof target === 'function' ? target : target.constructor);
+            required: options.required,
+        }), typeof target === "function" ? target : target.constructor);
     };
+}
+export function InjectOptional(token) {
+    return Inject(token, { required: false });
 }
 //# sourceMappingURL=inject.decorator.js.map
