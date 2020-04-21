@@ -1,5 +1,9 @@
 [![npm version](https://badge.fury.io/js/injets.svg)](https://badge.fury.io/js/injets)
 
+<div style="text-align: center;">
+  <img src="https://github.com/salomaosnff/injets/raw/master/logo.png" alt="Logo" width="200"/>
+</div>
+
 # Injets
 
 **💉 Dependency Injection**: Organize your code in [modules](#modules) and inject [providers](#providers) in other modules.
