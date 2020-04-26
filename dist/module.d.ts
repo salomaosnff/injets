@@ -1,5 +1,7 @@
 import { Constructor, DynamicModule } from "./types";
 import { ProviderRef } from "./provider";
+export declare const CURRENT_MODULE: unique symbol;
+export declare const ROOT_MODULE: unique symbol;
 export declare class ModuleRef<T = any> {
     name: string;
     instance: T;
@@ -11,7 +13,7 @@ export declare class ModuleRef<T = any> {
     readonly globalProviders: Map<any, ProviderRef<any>>;
     readonly root: ModuleRef;
     constructor(name: string, instance: T, root?: ModuleRef, isGlobal?: boolean);
-    get<T>(token: Constructor<T> | any, required?: boolean): Promise<T | undefined>;
+    get<T>(token: any, required?: boolean): Promise<T | undefined>;
     getModule<T = any>(module: Constructor<T>): ModuleRef<T>;
     static create(module: DynamicModule, root?: ModuleRef): Promise<ModuleRef>;
     static create<T extends Constructor>(module: T, root?: ModuleRef): Promise<ModuleRef<T>>;
