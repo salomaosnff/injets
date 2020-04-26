@@ -14,7 +14,6 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-
       - restore_cache:
           keys:
           - v1-dependencies-{{ checksum "package.json" }}
@@ -53,7 +52,7 @@ jobs:
 
 workflows:
   version: 2
-  test-deploy:
+  build:
     jobs:
       - test
       - lint
