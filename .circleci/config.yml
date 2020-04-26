@@ -33,6 +33,12 @@ jobs:
       - persist_to_workspace:
           root: ~/repo
           paths: .
+  lint:
+    << *defaults
+    steps:
+      - attach_workspace:
+        at: ~/repo
+      -run: yarn lint
   deploy:
     <<: *defaults
     steps:
@@ -49,15 +55,11 @@ workflows:
   version: 2
   test-deploy:
     jobs:
-      - test:
-          filters:
-            tags:
-              only: /^v.*/
+      - test
+      - lint
       - deploy:
           requires:
             - test
           filters:
-            tags:
-              only: /^v.*/
             branches:
-              ignore: /.*/
+              only: master
