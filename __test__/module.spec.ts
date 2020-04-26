@@ -132,6 +132,36 @@ it('rejects non global providers', async () => {
     expect(intermediateModule.get('globalModuleProvider')).rejects.toBeInstanceOf(ProviderNotFoundError)
   })
 
+  it('injects global provider class', async () => {
+    @Module({})
+    class IntermediateModule {}
+
+    class NotAProvider {}
+
+    @Module({
+      global: true,
+      providers: [
+        {
+          provide: NotAProvider,
+          useValue: new NotAProvider
+        }
+      ],
+      exports: [
+        NotAProvider
+      ]
+    })
+    class GlobalModule {}
+
+    @Module({ imports: [GlobalModule, IntermediateModule] })
+    class RootModule {}
+
+    const rootModule = await createModule(RootModule)
+    const intermediateModule = await rootModule.getModule(IntermediateModule)
+    const providerGotten = await intermediateModule.get(NotAProvider)
+
+    expect(providerGotten).toBeInstanceOf(NotAProvider)
+  })
+
 it('injects root module as provider', async () => {
 
     @Module({})
