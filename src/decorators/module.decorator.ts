@@ -13,7 +13,5 @@ export function Module(options: ModuleOptions): ClassDecorator {
     options.providers.push(target as any);
 
     Reflect.defineMetadata(MODULE_OPTIONS, options, target);
-
-    return Provider()(target);
   };
 }

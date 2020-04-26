@@ -67,16 +67,16 @@ export class AppModule {}
 ### Instantiating the root module
 
 To get your app up and running you first have to instantiate the `root module`.
-To do so, there's a static helper called `ModuleRef.create`.
+To do so, there's a static helper called `createModule`.
 This is your entry point:
 
 ```typescript
 // --- index.js ---
-import { ModuleRef } from 'injets'
+import { createModule } from 'injets'
 import { AppModule } from './app.module.ts'
 
 async function main() {
-    const app = await ModuleRef.create(AppModule)
+    const app = await createModule(AppModule)
     const helloProvider = await app.get(HelloProvider)
 
     // -> Hello World

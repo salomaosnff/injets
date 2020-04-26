@@ -3,6 +3,10 @@ import { ProviderRef } from "./provider";
 import { MODULE_OPTIONS } from "./meta/module.meta";
 import { PROVIDER_DEPENDENCIES } from "./meta/provider.meta";
 import { ProviderNotFoundError } from "./errors/module.errors";
+import { Provider } from "./decorators";
+
+export const CURRENT_MODULE = Symbol('CURRENT_MODULE')
+export const ROOT_MODULE = Symbol('ROOT_MODULE')
 
 export class ModuleRef<T = any> {
   readonly providers = new Map<any, ProviderRef>();
@@ -22,7 +26,7 @@ export class ModuleRef<T = any> {
   }
 
   async get<T>(
-    token: Constructor<T> | any,
+    token: any,
     required = true
   ): Promise<T | undefined> {
     const provider = this.providers.has(token)
@@ -30,6 +34,7 @@ export class ModuleRef<T = any> {
       : this.importedProviders.has(token)
       ? this.importedProviders.get(token)
       : this.root.globalProviders.get(token);
+
     if (typeof provider !== "undefined") return provider.get();
     if (required) {
       throw new ProviderNotFoundError(token, this.name);
@@ -83,8 +88,17 @@ export class ModuleRef<T = any> {
     );
 
     const ref = new ModuleRef(ModuleConstructor.name, new ModuleConstructor(), root, options.global);
+    options.exports?.forEach((exported) => {
+      ref.exports.add(exported)
+    })
 
     root = root || ref;
+
+    // Current module as provider
+    ref.providers.set(CURRENT_MODULE, new ProviderRef({ useValue: ref, provide: CURRENT_MODULE }, ref));
+
+    // Root module as provider
+    ref.providers.set(ROOT_MODULE, new ProviderRef({ useValue: root, provide: CURRENT_MODULE }, ref));
 
     // Init Submodules
     for (const submodule of imports) {

@@ -11,6 +11,8 @@ import { ProviderRef } from "./provider";
 import { MODULE_OPTIONS } from "./meta/module.meta";
 import { PROVIDER_DEPENDENCIES } from "./meta/provider.meta";
 import { ProviderNotFoundError } from "./errors/module.errors";
+export const CURRENT_MODULE = Symbol('CURRENT_MODULE');
+export const ROOT_MODULE = Symbol('ROOT_MODULE');
 export class ModuleRef {
     constructor(name, instance, root, isGlobal = false) {
         this.name = name;
@@ -44,6 +46,7 @@ export class ModuleRef {
         throw new Error(`Module ${module.name} not found in ${this.name}!`);
     }
     static create(module, root) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             let options;
             let ModuleConstructor;
@@ -64,7 +67,14 @@ export class ModuleRef {
                 return depsA.includes(tokenB) ? -1 : 0;
             }));
             const ref = new ModuleRef(ModuleConstructor.name, new ModuleConstructor(), root, options.global);
+            (_a = options.exports) === null || _a === void 0 ? void 0 : _a.forEach((exported) => {
+                ref.exports.add(exported);
+            });
             root = root || ref;
+            // Current module as provider
+            ref.providers.set(CURRENT_MODULE, new ProviderRef({ useValue: ref, provide: CURRENT_MODULE }, ref));
+            // Root module as provider
+            ref.providers.set(ROOT_MODULE, new ProviderRef({ useValue: root, provide: CURRENT_MODULE }, ref));
             // Init Submodules
             for (const submodule of imports) {
                 const submoduleInstance = yield this.create(submodule, ref);
