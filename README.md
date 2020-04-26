@@ -1,16 +1,21 @@
 [![npm version](https://badge.fury.io/js/injets.svg)](https://badge.fury.io/js/injets)
 
-# Injets
+<p align="center">
+  <img src="https://github.com/salomaosnff/injets/raw/master/logo.png" alt="Logo" width="200"/>
+</p>
+<p align="center">
+  Injets is a TypeScript Dependency Injection library inspired by <a href="https://nestjs.com/">NestJS</a>
+  that uses reflect-metadata and annotations
+  to make your code more organized.
+</p>
+
+## Features
 
 **💉 Dependency Injection**: Organize your code in [modules](#modules) and inject [providers](#providers) in other modules.
 
 **✏️ Annotations**:  Use annotations in your module classes to make your dependecy flow easier to understand.
 
 **🏢 Singletons and Transient providers**: Create singletons just by specifying a single flag, and don't bother when you should instantiate your classes anymore.
-
-Injets is a TypeScript Dependency Injection library inspired by [NestJS](https://nestjs.com/)
-that uses reflect-metadata and annotations
-to make your code more organized.
 
 ## Table of Contents
 
