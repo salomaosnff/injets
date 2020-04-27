@@ -29,16 +29,28 @@ export class ModuleRef<T = any> {
     token: any,
     required = true
   ): Promise<T | undefined> {
-    const provider = this.providers.has(token)
-      ? this.providers.get(token)
-      : this.importedProviders.has(token)
-      ? this.importedProviders.get(token)
-      : this.root.globalProviders.get(token);
+    const provider = this.getProvider(token)
 
-    if (typeof provider !== "undefined") return provider.get();
+    if (typeof provider !== "undefined") {
+      console.log(this.root.globalProviders)
+      return provider.get();
+    }
     if (required) {
       throw new ProviderNotFoundError(token, this.name);
     }
+  }
+
+  private getProvider (token: any) {
+    const { providers, importedProviders, root } = this
+    if (providers.has(token)) {
+      return providers.get(token)
+    }
+
+    if (importedProviders.has(token)) {
+      return importedProviders.get(token)
+    }
+
+    return root.globalProviders.get(token)
   }
 
   getModule<T = any>(module: Constructor<T>): ModuleRef<T> {
@@ -103,7 +115,8 @@ export class ModuleRef<T = any> {
     // Init Submodules
     for (const submodule of imports) {
       const submoduleInstance = await this.create(submodule, ref);
-      submoduleInstance.exports.forEach((provider, token) => {
+      submoduleInstance.exports.forEach((token) => {
+        const provider = ref.getProvider(token) as ProviderRef
         ref.importedProviders.set(token, provider);
       });
       ref.modules.set(submodule, submoduleInstance);
