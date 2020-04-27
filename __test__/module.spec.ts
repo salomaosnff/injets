@@ -198,7 +198,7 @@ it('injects root module as provider', async () => {
   it('should throw an exception if the provider is not registered', async () => {
     @Provider()
     class FooProvider {}
-    
+
     @Provider()
     class Foo2Provider {
       constructor (
@@ -213,7 +213,7 @@ it('injects root module as provider', async () => {
     })
     class BarModule {}
 
-    const app = await ModuleRef.create(BarModule);
+    const app = await createModule(BarModule);
     expect(app.get(Foo2Provider)).rejects.toBeInstanceOf(ProviderNotFoundError)
   })
 })
