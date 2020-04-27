@@ -57,7 +57,12 @@ describe('testing module', () => {
       @Inject() privateProvider!: PrivateProvider
     }
 
-    expect(createModule(TestModule)).rejects.toBeInstanceOf(ProviderNotFoundError)
+    try {
+      await createModule(TestModule)
+      expect(false).toBeTruthy()
+    } catch (e) {
+      expect(e).toBeInstanceOf(ProviderNotImportedError)
+    }
   })
 
   it('cannot inject a private provider on the constructor of another provider', async () => {
@@ -73,7 +78,6 @@ describe('testing module', () => {
     class TestModule {
       @Inject() testProvider!: TestProvider
     }
-
     expect(createModule(TestModule)).rejects.toBeInstanceOf(ProviderNotImportedError)
   })
 
@@ -132,6 +136,36 @@ it('rejects non global providers', async () => {
     expect(intermediateModule.get('globalModuleProvider')).rejects.toBeInstanceOf(ProviderNotFoundError)
   })
 
+it('injects global module providers as classes', async () => {
+    @Module({})
+    class IntermediateModule {}
+
+    class NotAProviderClass {}
+
+    @Module({
+      global: true,
+      providers: [
+        {
+          provide: NotAProviderClass,
+          useValue: new NotAProviderClass
+        }
+      ],
+      exports: [
+        NotAProviderClass
+      ]
+    })
+    class GlobalModule {}
+
+    @Module({ imports: [GlobalModule, IntermediateModule] })
+    class RootModule {}
+
+    const rootModule = await createModule(RootModule)
+    const intermediateModule = await rootModule.getModule(IntermediateModule)
+    const providerGotten = await intermediateModule.get(NotAProviderClass)
+
+    expect(providerGotten).toBeInstanceOf(NotAProviderClass)
+  })
+
 it('injects root module as provider', async () => {
 
     @Module({})
@@ -168,7 +202,7 @@ it('injects root module as provider', async () => {
   it('should throw an exception if the provider is not registered', async () => {
     @Provider()
     class FooProvider {}
-    
+
     @Provider()
     class Foo2Provider {
       constructor (
@@ -183,7 +217,29 @@ it('injects root module as provider', async () => {
     })
     class BarModule {}
 
-    const app = await ModuleRef.create(BarModule);
-    expect(app.get(Foo2Provider)).rejects.toBeInstanceOf(ProviderNotFoundError)
+    const app = await createModule(BarModule);
+    expect(app.get(Foo2Provider)).rejects.toBeInstanceOf(ProviderNotImportedError)
+  })
+
+  it('injects current module in constructor using inject decorator', async () => {
+    @Provider()
+    class TestProvider {
+      constructor(
+        @Inject(CURRENT_MODULE)
+        public testModule: any
+      ) {}
+    }
+
+    @Module({
+      providers: [
+        TestProvider
+      ]
+    })
+    class TestModule{}
+
+    const testModule = await createModule(TestModule)
+    const testProvider = await testModule.get<TestProvider>(TestProvider) as TestProvider
+
+    expect(testProvider.testModule).toBe(testModule)
   })
 })
