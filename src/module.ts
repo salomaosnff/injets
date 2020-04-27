@@ -32,7 +32,6 @@ export class ModuleRef<T = any> {
     const provider = this.getProvider(token)
 
     if (typeof provider !== "undefined") {
-      console.log(this.root.globalProviders)
       return provider.get();
     }
     if (required) {
