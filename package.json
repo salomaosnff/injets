@@ -1,6 +1,6 @@
 {
   "name": "injets",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "TypeScript Dependency Injection using reflect-metadata, typescript and ES7 features",
   "main": "src/index.ts",
   "repository": "https://github.com/salomaosnff/injets.git",
