@@ -1,43 +1,44 @@
-# Javascript Node CircleCI 2.0 configuration file heyyy
-#
-# Check {{ '/2.0/language-javascript/' | docs_url }} for more details
-#
 version: 2
 
 defaults: &defaults
-  working_directory: ~/repo
+  working_directory: ~/project/injets
   docker:
     - image: circleci/node:8.9.1
 
 jobs:
-  test:
+  install:
     <<: *defaults
     steps:
       - checkout
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "package.json" }}
-          - v1-dependencies-
-
-      - run: yarn
-      - run:
-          name: Run tests
-          command: yarn test
-
+            - v1-injets-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - v1-injets-{{ .Branch }}-
+            - v1-injets-
+      - run: npm install
       - save_cache:
+          key: v1-injets-{{ .Branch }}-{{ checksum "yarn.lock" }}
           paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
-
+            - node_modules/
       - persist_to_workspace:
-          root: ~/repo
-          paths: .
+          root: ~/project
+          paths:
+            - injets
+
   lint:
-    << *defaults
+    <<: *defaults
     steps:
       - attach_workspace:
-        at: ~/repo
-      -run: yarn lint
+          at: ~/project
+      - run: yarn lint
+
+  test:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run: yarn test
+
   deploy:
     <<: *defaults
     steps:
@@ -45,20 +46,24 @@ jobs:
           at: ~/repo
       - run:
           name: Authenticate with registry
-          command: echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/repo/.npmrc
+          command: echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/rep
       - run:
           name: Publish package
           command: npm publish
-
 workflows:
   version: 2
-  build:
+  build-and-deploy:
     jobs:
-      - test
-      - lint
+      - install
+      - test:
+          requires:
+            - install
+      - lint:
+          requires:
+            - install
       - deploy:
           requires:
-            - test
+            - install
           filters:
             branches:
               only: master
