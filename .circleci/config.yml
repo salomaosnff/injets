@@ -15,7 +15,7 @@ jobs:
             - v1-injets-{{ .Branch }}-{{ checksum "yarn.lock" }}
             - v1-injets-{{ .Branch }}-
             - v1-injets-
-      - run: npm install
+      - run: yarn
       - save_cache:
           key: v1-injets-{{ .Branch }}-{{ checksum "yarn.lock" }}
           paths:
