@@ -39,7 +39,7 @@ export class ModuleRef<T = any> {
     }
   }
 
-  private getProvider (token: any) {
+  getProvider (token: any) {
     const { providers, importedProviders, root } = this
     if (providers.has(token)) {
       return providers.get(token)
@@ -50,6 +50,12 @@ export class ModuleRef<T = any> {
     }
 
     return root.globalProviders.get(token)
+  }
+
+  hasProvider (token: any) {
+    return this.providers.has(token) ||
+      this.importedProviders.has(token) ||
+      this.root.globalProviders.has(token)
   }
 
   getModule<T = any>(module: Constructor<T>): ModuleRef<T> {
@@ -141,6 +147,7 @@ export class ModuleRef<T = any> {
     const moduleDeps =
       Reflect.getMetadata(PROVIDER_DEPENDENCIES, ModuleConstructor) || [];
 
+    ProviderRef.checkIfHasAllConstructorParams(ModuleConstructor, ref)
     for (const dep of moduleDeps) {
       if (dep.key) {
         ref.instance[dep.key] = await ref.get(dep.token, dep.required);

@@ -7,11 +7,10 @@ export function Inject(token?: any, options: InjectOptions = { required: true })
   return function (target: Record<string, any>, key: string | symbol, index?: number) {
     const deps =
       Reflect.getMetadata(PROVIDER_DEPENDENCIES, target.constructor) || [];
-
     token =
       token !== undefined
         ? token
-        : index
+        : typeof index === 'number'
         ? Reflect.getMetadata("design:paramtypes", target, key)[index]
         : Reflect.getMetadata("design:type", target, key);
 

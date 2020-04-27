@@ -2,6 +2,7 @@ import { ProviderOptions, Constructor } from './types'
 import { ModuleRef } from './module'
 import { PROVIDER_SCOPE, PROVIDER_DEPENDENCIES } from './meta/provider.meta'
 import { ProviderNotImportedError } from './errors/provider.errors'
+import { Dependecy } from './decorators';
 
 export class ProviderRef<T = any> {
   private instance!: T;
@@ -27,20 +28,27 @@ export class ProviderRef<T = any> {
     }
   }
 
-  private static checkIfHasAllConstructorParams (ProviderConstructor: Constructor, params: any[]) {
-    const paramConstructorToParamInstance = new WeakMap<Constructor, any>()
-    for (const param of params) {
-      param?.constructor && paramConstructorToParamInstance.set(param.constructor, param)
+  static getName (token: any) {
+    if (typeof token === 'function') {
+      return token.name
     }
+    return String(token)
+  }
 
-    const constructorParams = Reflect.getMetadata('design:paramtypes', ProviderConstructor)
-    if (!constructorParams) {
-      return
-    }
+  static checkIfHasAllConstructorParams (ProviderConstructor: Constructor, moduleRef: ModuleRef) {
+    const paramsNames = []
 
-    for (const param of constructorParams) {
-      if (typeof param === 'function' && !paramConstructorToParamInstance.get(param)) {
-        throw new ProviderNotImportedError(ProviderConstructor, param)
+    const providerDependencyList = Reflect.getMetadata(PROVIDER_DEPENDENCIES, ProviderConstructor) || []
+    const currentProviderName = this.getName(ProviderConstructor)
+
+    for (const provider of providerDependencyList) {
+      if (moduleRef.hasProvider(provider.token)) {
+        paramsNames.push(this.getName(provider))
+      } else if (provider.required) {
+        paramsNames.push('?')
+        throw new ProviderNotImportedError(currentProviderName, paramsNames, provider)
+      } else {
+        paramsNames.push('undefined')
       }
     }
   }
@@ -60,6 +68,7 @@ export class ProviderRef<T = any> {
     }
 
     if (ProviderConstructor) {
+      this.checkIfHasAllConstructorParams(ProviderConstructor, moduleRef)
       const depsList: {
         index?: number;
         key?: string | symbol;
@@ -83,7 +92,6 @@ export class ProviderRef<T = any> {
         }
       }
 
-      this.checkIfHasAllConstructorParams(ProviderConstructor, deps.params)
       const instance = new ProviderConstructor(...deps.params);
 
       return instance;
