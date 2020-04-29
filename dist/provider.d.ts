@@ -5,7 +5,8 @@ export declare class ProviderRef<T = any> {
     private instance;
     private options;
     constructor(optionsOrConstructor: ProviderOptions | Constructor, module: ModuleRef);
-    private static checkIfHasAllConstructorParams;
+    static getName(token: any): any;
+    static checkIfHasAllConstructorParams(ProviderConstructor: Constructor, moduleRef: ModuleRef): void;
     static create<T extends any>(optionsOrConstructor: ProviderOptions | Constructor, moduleRef: ModuleRef): Promise<T>;
     factory(): Promise<T>;
     get(): Promise<T>;

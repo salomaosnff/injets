@@ -2,7 +2,6 @@ import { ProviderOptions, Constructor } from './types'
 import { ModuleRef } from './module'
 import { PROVIDER_SCOPE, PROVIDER_DEPENDENCIES } from './meta/provider.meta'
 import { ProviderNotImportedError } from './errors/provider.errors'
-import { Dependecy } from './decorators';
 
 export class ProviderRef<T = any> {
   private instance!: T;

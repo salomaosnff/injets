@@ -3,10 +3,9 @@ import { ProviderRef } from "./provider";
 import { MODULE_OPTIONS } from "./meta/module.meta";
 import { PROVIDER_DEPENDENCIES } from "./meta/provider.meta";
 import { ProviderNotFoundError } from "./errors/module.errors";
-import { Provider } from "./decorators";
 
-export const CURRENT_MODULE = Symbol('CURRENT_MODULE')
-export const ROOT_MODULE = Symbol('ROOT_MODULE')
+export const CURRENT_MODULE = Symbol("CURRENT_MODULE");
+export const ROOT_MODULE = Symbol("ROOT_MODULE");
 
 export class ModuleRef<T = any> {
   readonly providers = new Map<any, ProviderRef>();
@@ -25,37 +24,36 @@ export class ModuleRef<T = any> {
     this.root = root || this;
   }
 
-  async get<T>(
-    token: any,
-    required = true
-  ): Promise<T | undefined> {
-    const provider = this.getProvider(token)
-
-    if (typeof provider !== "undefined") {
-      return provider.get();
+  async get<T>(token: any, required = true): Promise<T | undefined> {
+    if (this.hasProvider(token)) {
+      return this.getProvider(token)?.get();
     }
+
     if (required) {
       throw new ProviderNotFoundError(token, this.name);
     }
   }
 
-  getProvider (token: any) {
-    const { providers, importedProviders, root } = this
+  getProvider(token: any) {
+    const { providers, importedProviders, root } = this;
+
     if (providers.has(token)) {
-      return providers.get(token)
+      return providers.get(token);
     }
 
     if (importedProviders.has(token)) {
-      return importedProviders.get(token)
+      return importedProviders.get(token);
     }
 
-    return root.globalProviders.get(token)
+    return root.globalProviders.get(token);
   }
 
-  hasProvider (token: any) {
-    return this.providers.has(token) ||
+  hasProvider(token: any) {
+    return (
+      this.providers.has(token) ||
       this.importedProviders.has(token) ||
       this.root.globalProviders.has(token)
+    );
   }
 
   getModule<T = any>(module: Constructor<T>): ModuleRef<T> {
@@ -104,24 +102,36 @@ export class ModuleRef<T = any> {
       })
     );
 
-    const ref = new ModuleRef(ModuleConstructor.name, new ModuleConstructor(), root, options.global);
+    const ref = new ModuleRef(
+      ModuleConstructor.name,
+      new ModuleConstructor(),
+      root,
+      options.global
+    );
+
     options.exports?.forEach((exported) => {
-      ref.exports.add(exported)
-    })
+      ref.exports.add(exported);
+    });
 
     root = root || ref;
 
     // Current module as provider
-    ref.providers.set(CURRENT_MODULE, new ProviderRef({ useValue: ref, provide: CURRENT_MODULE }, ref));
+    ref.providers.set(
+      CURRENT_MODULE,
+      new ProviderRef({ useValue: ref, provide: CURRENT_MODULE }, ref)
+    );
 
     // Root module as provider
-    ref.providers.set(ROOT_MODULE, new ProviderRef({ useValue: root, provide: CURRENT_MODULE }, ref));
+    ref.providers.set(
+      ROOT_MODULE,
+      new ProviderRef({ useValue: root, provide: CURRENT_MODULE }, ref)
+    );
 
     // Init Submodules
     for (const submodule of imports) {
       const submoduleInstance = await this.create(submodule, ref);
       submoduleInstance.exports.forEach((token) => {
-        const provider = ref.getProvider(token) as ProviderRef
+        const provider = submoduleInstance.getProvider(token) as ProviderRef;
         ref.importedProviders.set(token, provider);
       });
       ref.modules.set(submodule, submoduleInstance);
@@ -147,7 +157,7 @@ export class ModuleRef<T = any> {
     const moduleDeps =
       Reflect.getMetadata(PROVIDER_DEPENDENCIES, ModuleConstructor) || [];
 
-    ProviderRef.checkIfHasAllConstructorParams(ModuleConstructor, ref)
+    ProviderRef.checkIfHasAllConstructorParams(ModuleConstructor, ref);
     for (const dep of moduleDeps) {
       if (dep.key) {
         ref.instance[dep.key] = await ref.get(dep.token, dep.required);

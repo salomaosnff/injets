@@ -1,14 +1,14 @@
 {
   "name": "injets",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "TypeScript Dependency Injection using reflect-metadata, typescript and ES7 features",
-  "main": "src/index.ts",
+  "main": "./dist/index.js",
   "repository": "https://github.com/salomaosnff/injets.git",
   "author": "Salomao Neto <salomaosnff3@gmail.com>",
   "license": "MIT",
   "private": false,
   "scripts": {
-    "build": "tsc -b",
+    "build": "rm -rf dist && tsc -b",
     "test": "jest",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "test:coverage": "yarn test --collectCoverage",

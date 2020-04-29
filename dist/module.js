@@ -11,8 +11,8 @@ import { ProviderRef } from "./provider";
 import { MODULE_OPTIONS } from "./meta/module.meta";
 import { PROVIDER_DEPENDENCIES } from "./meta/provider.meta";
 import { ProviderNotFoundError } from "./errors/module.errors";
-export const CURRENT_MODULE = Symbol('CURRENT_MODULE');
-export const ROOT_MODULE = Symbol('ROOT_MODULE');
+export const CURRENT_MODULE = Symbol("CURRENT_MODULE");
+export const ROOT_MODULE = Symbol("ROOT_MODULE");
 export class ModuleRef {
     constructor(name, instance, root, isGlobal = false) {
         this.name = name;
@@ -26,18 +26,30 @@ export class ModuleRef {
         this.root = root || this;
     }
     get(token, required = true) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            const provider = this.providers.has(token)
-                ? this.providers.get(token)
-                : this.importedProviders.has(token)
-                    ? this.importedProviders.get(token)
-                    : this.root.globalProviders.get(token);
-            if (typeof provider !== "undefined")
-                return provider.get();
+            if (this.hasProvider(token)) {
+                return (_a = this.getProvider(token)) === null || _a === void 0 ? void 0 : _a.get();
+            }
             if (required) {
                 throw new ProviderNotFoundError(token, this.name);
             }
         });
+    }
+    getProvider(token) {
+        const { providers, importedProviders, root } = this;
+        if (providers.has(token)) {
+            return providers.get(token);
+        }
+        if (importedProviders.has(token)) {
+            return importedProviders.get(token);
+        }
+        return root.globalProviders.get(token);
+    }
+    hasProvider(token) {
+        return (this.providers.has(token) ||
+            this.importedProviders.has(token) ||
+            this.root.globalProviders.has(token));
     }
     getModule(module) {
         const ref = this.modules.get(module);
@@ -78,7 +90,8 @@ export class ModuleRef {
             // Init Submodules
             for (const submodule of imports) {
                 const submoduleInstance = yield this.create(submodule, ref);
-                submoduleInstance.exports.forEach((provider, token) => {
+                submoduleInstance.exports.forEach((token) => {
+                    const provider = submoduleInstance.getProvider(token);
                     ref.importedProviders.set(token, provider);
                 });
                 ref.modules.set(submodule, submoduleInstance);
@@ -95,6 +108,7 @@ export class ModuleRef {
                 }
             }
             const moduleDeps = Reflect.getMetadata(PROVIDER_DEPENDENCIES, ModuleConstructor) || [];
+            ProviderRef.checkIfHasAllConstructorParams(ModuleConstructor, ref);
             for (const dep of moduleDeps) {
                 if (dep.key) {
                     ref.instance[dep.key] = yield ref.get(dep.token, dep.required);

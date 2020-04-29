@@ -25,18 +25,26 @@ export class ProviderRef {
             this.options = Object.assign({ scope: "SINGLETON" }, optionsOrConstructor);
         }
     }
-    static checkIfHasAllConstructorParams(ProviderConstructor, params) {
-        const paramConstructorToParamInstance = new WeakMap();
-        for (const param of params) {
-            (param === null || param === void 0 ? void 0 : param.constructor) && paramConstructorToParamInstance.set(param.constructor, param);
+    static getName(token) {
+        if (typeof token === 'function') {
+            return token.name;
         }
-        const constructorParams = Reflect.getMetadata('design:paramtypes', ProviderConstructor);
-        if (!constructorParams) {
-            return;
-        }
-        for (const param of constructorParams) {
-            if (typeof param === 'function' && !paramConstructorToParamInstance.get(param)) {
-                throw new ProviderNotImportedError(ProviderConstructor, param);
+        return String(token);
+    }
+    static checkIfHasAllConstructorParams(ProviderConstructor, moduleRef) {
+        const paramsNames = [];
+        const providerDependencyList = Reflect.getMetadata(PROVIDER_DEPENDENCIES, ProviderConstructor) || [];
+        const currentProviderName = this.getName(ProviderConstructor);
+        for (const provider of providerDependencyList) {
+            if (moduleRef.hasProvider(provider.token)) {
+                paramsNames.push(this.getName(provider));
+            }
+            else if (provider.required) {
+                paramsNames.push('?');
+                throw new ProviderNotImportedError(currentProviderName, paramsNames, provider);
+            }
+            else {
+                paramsNames.push('undefined');
             }
         }
     }
@@ -53,6 +61,7 @@ export class ProviderRef {
                 return optionsOrConstructor.useFactory();
             }
             if (ProviderConstructor) {
+                this.checkIfHasAllConstructorParams(ProviderConstructor, moduleRef);
                 const depsList = Reflect.getMetadata(PROVIDER_DEPENDENCIES, ProviderConstructor) || [];
                 const deps = {
                     params: [],
@@ -66,7 +75,6 @@ export class ProviderRef {
                         deps.props[item.key] = yield moduleRef.get(item.token, item.required);
                     }
                 }
-                this.checkIfHasAllConstructorParams(ProviderConstructor, deps.params);
                 const instance = new ProviderConstructor(...deps.params);
                 return instance;
             }

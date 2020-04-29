@@ -6,7 +6,7 @@ export interface Dependecy {
   required: boolean;
 }
 
-export function Provider(scope = 'SINGLETON'): ClassDecorator {
+export function Provider(scope: 'SINGLETON' | 'TRANSIENT' = 'SINGLETON'): ClassDecorator {
   return function(target) {
     Reflect.defineMetadata(PROVIDER_SCOPE, scope, target)
 

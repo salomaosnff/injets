@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { Module, Provider, Inject, DynamicModule, ROOT_MODULE, CURRENT_MODULE } from '../src'
+import { Module, Provider, Inject, ROOT_MODULE, CURRENT_MODULE } from '../src'
 import { ProviderNotFoundError } from '../src/errors/module.errors'
 import { ProviderNotImportedError } from '../src/errors/provider.errors'
 import { createModule } from '../src'

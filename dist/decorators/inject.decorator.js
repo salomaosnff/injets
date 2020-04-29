@@ -5,7 +5,7 @@ export function Inject(token, options = { required: true }) {
         token =
             token !== undefined
                 ? token
-                : index
+                : typeof index === 'number'
                     ? Reflect.getMetadata("design:paramtypes", target, key)[index]
                     : Reflect.getMetadata("design:type", target, key);
         Reflect.defineMetadata(PROVIDER_DEPENDENCIES, deps.concat({
