@@ -129,7 +129,7 @@ export class ModuleRef<T = any> {
 
     // Init Submodules
     for (const submodule of imports) {
-      const submoduleInstance = await this.create(submodule, ref);
+      const submoduleInstance = await this.create(submodule, root);
       submoduleInstance.exports.forEach((token) => {
         const provider = submoduleInstance.getProvider(token) as ProviderRef;
         ref.importedProviders.set(token, provider);
