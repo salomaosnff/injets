@@ -32,9 +32,9 @@ jobs:
           at: ~/project
       - run: yarn build
       - persist_to_workspace:
-        root: ~/project
-        paths:
-          - injets
+          root: ~/project
+          paths:
+            - injets
 
   lint:
     <<: *defaults
