@@ -25,6 +25,17 @@ jobs:
           paths:
             - injets
 
+  build:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run: yarn build
+      - persist_to_workspace:
+        root: ~/project
+        paths:
+          - injets
+
   lint:
     <<: *defaults
     steps:
@@ -46,7 +57,7 @@ jobs:
           at: ~/project
       - run:
           name: Authenticate with registry
-          command: echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/project/.npmrc
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/project/.npmrc
       - run:
           name: Publish package
           command: npm publish
@@ -61,9 +72,12 @@ workflows:
       - lint:
           requires:
             - install
-      - deploy:
+      - build:
           requires:
             - install
+      - deploy:
+          requires:
+            - build
           filters:
             branches:
               only: master
