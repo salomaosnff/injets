@@ -1,51 +1,44 @@
-import 'reflect-metadata'
-import { Module, Provider, Inject, ROOT_MODULE, CURRENT_MODULE } from '../src'
-import { ProviderNotFoundError } from '../src/errors/module.errors'
-import { ProviderNotImportedError } from '../src/errors/provider.errors'
-import { createModule } from '../src'
+import "reflect-metadata";
+import { Module, Provider, Inject, ROOT_MODULE, CURRENT_MODULE } from "../src";
+import { ProviderNotFoundError } from "../src/errors/module.errors";
+import { ProviderNotImportedError } from "../src/errors/provider.errors";
+import { createModule } from "../src";
 
-describe('testing module', () => {
-  it('can access providers inside itself', async () => {
+describe("testing module", () => {
+  it("can access providers inside itself", async () => {
     @Provider()
     class FooProvider {}
     @Module({
-      providers: [
-        FooProvider
-      ]
+      providers: [FooProvider],
     })
     class FooModule {
-      @Inject() fooProvider!: FooProvider
-      onModuleInit () {
-        expect(this.fooProvider).toBeInstanceOf(FooProvider)
+      @Inject() fooProvider!: FooProvider;
+      onModuleInit() {
+        expect(this.fooProvider).toBeInstanceOf(FooProvider);
       }
     }
 
-    await createModule(FooModule)
-  })
+    createModule(FooModule);
+  });
 
-  it('can access one provider inside another provider', async () => {
+  it("can access one provider inside another provider", async () => {
     @Provider()
     class BarProvider {}
     @Provider()
     class FooProvider {
-      constructor (barProvider: BarProvider) {
-        expect(barProvider).toBeInstanceOf(BarProvider)
+      constructor(barProvider: BarProvider) {
+        expect(barProvider).toBeInstanceOf(BarProvider);
       }
     }
-    @Module(
-      {
-        providers: [
-          FooProvider,
-          BarProvider
-        ]
-      }
-    )
+    @Module({
+      providers: [FooProvider, BarProvider],
+    })
     class FooModule {}
 
-    await createModule(FooModule)
-  })
+    createModule(FooModule);
+  });
 
-  it('cannot access a private provider from another module', async () => {
+  it("cannot access a private provider from another module", async () => {
     @Provider()
     class PrivateProvider {}
 
@@ -54,34 +47,39 @@ describe('testing module', () => {
 
     @Module({ imports: [PrivateProviderModule] })
     class TestModule {
-      @Inject() privateProvider!: PrivateProvider
+      @Inject() privateProvider!: PrivateProvider;
     }
 
     try {
-      await createModule(TestModule)
-      expect(false).toBeTruthy()
+      createModule(TestModule);
+      expect(false).toBeTruthy();
     } catch (e) {
-      expect(e).toBeInstanceOf(ProviderNotImportedError)
+      expect(e).toBeInstanceOf(ProviderNotImportedError);
     }
-  })
+  });
 
-  it('cannot inject a private provider on the constructor of another provider', async () => {
+  it("cannot inject a private provider on the constructor of another provider", async () => {
     @Provider()
     class PrivateProvider {}
 
     @Provider()
     class TestProvider {
-      constructor (public privateProvider: PrivateProvider) {}
+      constructor(public privateProvider: PrivateProvider) {}
     }
 
     @Module({ providers: [TestProvider] })
     class TestModule {
-      @Inject() testProvider!: TestProvider
+      @Inject() testProvider!: TestProvider;
     }
-    expect(createModule(TestModule)).rejects.toBeInstanceOf(ProviderNotImportedError)
-  })
 
-  it('injects global module providers', async () => {
+    try {
+      createModule(TestModule);
+    } catch (err) {
+      expect(err).toBeInstanceOf(ProviderNotImportedError);
+    }
+  });
+
+  it("injects global module providers", async () => {
     @Module({})
     class IntermediateModule {}
 
@@ -89,27 +87,25 @@ describe('testing module', () => {
       global: true,
       providers: [
         {
-          provide: 'globalModuleProvider',
-          useValue: 'works'
-        }
+          provide: "globalModuleProvider",
+          useValue: "works",
+        },
       ],
-      exports: [
-        'globalModuleProvider'
-      ]
+      exports: ["globalModuleProvider"],
     })
     class GlobalModule {}
 
     @Module({ imports: [GlobalModule, IntermediateModule] })
     class RootModule {}
 
-    const rootModule = await createModule(RootModule)
-    const intermediateModule = await rootModule.getModule(IntermediateModule)
-    const globalModuleProvider = await intermediateModule.get('globalModuleProvider')
+    const rootModule = createModule(RootModule);
+    const intermediateModule = rootModule.getModule(IntermediateModule);
+    const globalModuleProvider = intermediateModule.get("globalModuleProvider");
 
-    expect(globalModuleProvider).toBe('works')
-  })
+    expect(globalModuleProvider).toBe("works");
+  });
 
-it('rejects non global providers', async () => {
+  it("rejects non global providers", async () => {
     @Module({})
     class IntermediateModule {}
 
@@ -117,26 +113,28 @@ it('rejects non global providers', async () => {
       global: false,
       providers: [
         {
-          provide: 'globalModuleProvider',
-          useValue: 'works'
-        }
+          provide: "globalModuleProvider",
+          useValue: "works",
+        },
       ],
-      exports: [
-        'globalModuleProvider'
-      ]
+      exports: ["globalModuleProvider"],
     })
     class GlobalModule {}
 
     @Module({ imports: [GlobalModule, IntermediateModule] })
     class RootModule {}
 
-    const rootModule = await createModule(RootModule)
-    const intermediateModule = await rootModule.getModule(IntermediateModule)
+    const rootModule = createModule(RootModule);
+    const intermediateModule = rootModule.getModule(IntermediateModule);
 
-    expect(intermediateModule.get('globalModuleProvider')).rejects.toBeInstanceOf(ProviderNotFoundError)
-  })
+    try {
+      intermediateModule.get("globalModuleProvider");
+    } catch (err) {
+      expect(err).toBeInstanceOf(ProviderNotFoundError);
+    }
+  });
 
-it('injects global module providers as classes', async () => {
+  it("injects global module providers as classes", async () => {
     @Module({})
     class IntermediateModule {}
 
@@ -147,81 +145,78 @@ it('injects global module providers as classes', async () => {
       providers: [
         {
           provide: NotAProviderClass,
-          useValue: new NotAProviderClass
-        }
+          useValue: new NotAProviderClass(),
+        },
       ],
-      exports: [
-        NotAProviderClass
-      ]
+      exports: [NotAProviderClass],
     })
     class GlobalModule {}
 
     @Module({ imports: [GlobalModule, IntermediateModule] })
     class RootModule {}
 
-    const rootModule = await createModule(RootModule)
-    const intermediateModule = await rootModule.getModule(IntermediateModule)
-    const providerGotten = await intermediateModule.get(NotAProviderClass)
+    const rootModule = createModule(RootModule);
+    const intermediateModule = rootModule.getModule(IntermediateModule);
+    const providerGotten = intermediateModule.get(NotAProviderClass);
 
-    expect(providerGotten).toBeInstanceOf(NotAProviderClass)
-  })
+    expect(providerGotten).toBeInstanceOf(NotAProviderClass);
+  });
 
-it('injects root module as provider', async () => {
-
+  it("injects root module as provider", async () => {
     @Module({})
     class TestModule {}
 
     @Module({
-      imports: [TestModule]
+      imports: [TestModule],
     })
-    class RootModule{}
+    class RootModule {}
 
-    const rootModule = await createModule(RootModule)
-    const testModule = await rootModule.getModule(TestModule)
-    const rootModuleFromTestModule = await testModule.get(ROOT_MODULE)
+    const rootModule = createModule(RootModule);
+    const testModule = rootModule.getModule(TestModule);
+    const rootModuleFromTestModule = testModule.get(ROOT_MODULE);
 
-    expect(rootModuleFromTestModule).toBe(rootModule)
-  })
+    expect(rootModuleFromTestModule).toBe(rootModule);
+  });
 
-  it('injects current module', async () => {
+  it("injects current module", async () => {
     @Module({})
     class TestModule {}
 
     @Module({
-      imports: [TestModule]
+      imports: [TestModule],
     })
-    class RootModule{}
+    class RootModule {}
 
-    const rootModule = await createModule(RootModule)
-    const testModule = await rootModule.getModule(TestModule)
-    const rootModuleFromTestModule = await testModule.get(CURRENT_MODULE)
+    const rootModule = createModule(RootModule);
+    const testModule = rootModule.getModule(TestModule);
+    const rootModuleFromTestModule = testModule.get(CURRENT_MODULE);
 
-    expect(rootModuleFromTestModule).toBe(testModule)
-  })
+    expect(rootModuleFromTestModule).toBe(testModule);
+  });
 
-  it('should throw an exception if the provider is not registered', async () => {
+  it("should throw an exception if the provider is not registered", async () => {
     @Provider()
     class FooProvider {}
 
     @Provider()
     class Foo2Provider {
-      constructor (
-        readonly foo: FooProvider
-      ) {
-        console.log('AAAA', foo)
-      }
+      constructor(readonly foo: FooProvider) {}
     }
 
     @Module({
-      providers: [Foo2Provider]
+      providers: [Foo2Provider],
     })
     class BarModule {}
 
-    const app = await createModule(BarModule);
-    expect(app.get(Foo2Provider)).rejects.toBeInstanceOf(ProviderNotImportedError)
-  })
+    try {
+      const app = createModule(BarModule);
+      app.get(Foo2Provider);
+    } catch (err) {
+      expect(err).toBeInstanceOf(ProviderNotImportedError);
+    }
+  });
 
-  it('injects current module in constructor using inject decorator', async () => {
+  it("injects current module in constructor using inject decorator", async () => {
     @Provider()
     class TestProvider {
       constructor(
@@ -231,15 +226,44 @@ it('injects root module as provider', async () => {
     }
 
     @Module({
-      providers: [
-        TestProvider
-      ]
+      providers: [TestProvider],
     })
-    class TestModule{}
+    class TestModule {}
 
-    const testModule = await createModule(TestModule)
-    const testProvider = await testModule.get<TestProvider>(TestProvider) as TestProvider
+    const testModule = createModule(TestModule);
+    const testProvider = testModule.get<TestProvider>(
+      TestProvider
+    ) as TestProvider;
 
-    expect(testProvider.testModule).toBe(testModule)
-  })
-})
+    expect(testProvider.testModule).toBe(testModule);
+  });
+
+  it("injects providers by group name", () => {
+    @Module({
+      providers: [
+        {
+          provide: "PROVIDER_1",
+          groups: ["text"],
+          useValue: "Hello World!",
+        },
+        {
+          provide: "PROVIDER_2",
+          groups: ["number", "constant"],
+          useValue: 3.14,
+        },
+        {
+          provide: "PROVIDER_3",
+          groups: ["constant"],
+          useValue: "PI",
+        },
+      ],
+    })
+    class FooModule {}
+
+    const module = createModule(FooModule);
+
+    expect(module.getByGroup("text")).toEqual(["Hello World!"]);
+    expect(module.getByGroup("number")).toEqual([3.14]);
+    expect(module.getByGroup("constant")).toEqual([3.14, "PI"]);
+  });
+});

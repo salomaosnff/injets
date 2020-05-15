@@ -14,7 +14,10 @@ export interface DynamicModule extends ModuleOptions {
 export interface ProviderOptions {
   provide?: any;
   scope?: 'SINGLETON' | 'TRANSIENT';
+  groups?: Array<string | symbol | number>;
   useValue?: any;
   useClass?: Constructor;
-  useFactory?(): Promise<any>;
+  useFactory?(): any;
 }
+
+export type Conditional<T extends boolean, TT, FT> = T extends true ? TT : FT

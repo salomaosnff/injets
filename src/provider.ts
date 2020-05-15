@@ -52,10 +52,10 @@ export class ProviderRef<T = any> {
     }
   }
 
-  static async create<T extends any>(
+  static create<T extends any>(
     optionsOrConstructor: ProviderOptions | Constructor,
     moduleRef: ModuleRef
-  ): Promise<T> {
+  ): T {
     let ProviderConstructor: Constructor | undefined;
 
     if (typeof optionsOrConstructor === "function") {
@@ -82,12 +82,12 @@ export class ProviderRef<T = any> {
 
       for (const item of depsList) {
         if (typeof item.index === "number") {
-          deps.params[item.index] = await moduleRef.get(
+          deps.params[item.index] = moduleRef.get(
             item.token,
             item.required
           );
         } else if (item.key !== undefined) {
-          deps.props[item.key] = await moduleRef.get(item.token, item.required);
+          deps.props[item.key] = moduleRef.get(item.token, item.required);
         }
       }
 
@@ -99,7 +99,7 @@ export class ProviderRef<T = any> {
     return (optionsOrConstructor as ProviderOptions).useValue;
   }
 
-  factory(): Promise<T> {
+  factory(): T {
     if (typeof this.options.useFactory === "function") {
       return this.options.useFactory();
     }
@@ -111,10 +111,10 @@ export class ProviderRef<T = any> {
     return this.options.useValue;
   }
 
-  async get(): Promise<T> {
+  get(): T {
     if (this.options.scope === "SINGLETON") {
       if (this.instance) return this.instance;
-      return (this.instance = await this.factory());
+      return (this.instance = this.factory());
     }
 
     return this.factory();
