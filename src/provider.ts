@@ -1,7 +1,11 @@
-import { ProviderOptions, Constructor } from './types'
-import { ModuleRef } from './module'
-import { PROVIDER_SCOPE, PROVIDER_DEPENDENCIES } from './meta/provider.meta'
-import { ProviderNotImportedError } from './errors/provider.errors'
+import { ProviderOptions, Constructor } from "./types";
+import { ModuleRef } from "./module";
+import {
+  PROVIDER_SCOPE,
+  PROVIDER_DEPENDENCIES,
+  PROVIDER_GROUPS,
+} from "./meta/provider.meta";
+import { ProviderNotImportedError } from "./errors/provider.errors";
 
 export class ProviderRef<T = any> {
   private instance!: T;
@@ -18,36 +22,46 @@ export class ProviderRef<T = any> {
         scope:
           Reflect.getMetadata(PROVIDER_SCOPE, optionsOrConstructor) ||
           "SINGLETON",
+        groups:
+          Reflect.getMetadata(PROVIDER_GROUPS, optionsOrConstructor) || [],
       };
     } else {
       this.options = Object.assign(
-        { scope: "SINGLETON" },
+        { scope: "SINGLETON", groups: [] },
         optionsOrConstructor
       );
     }
   }
 
-  static getName (token: any) {
-    if (typeof token === 'function') {
-      return token.name
+  static getName(token: any) {
+    if (typeof token === "function") {
+      return token.name;
     }
-    return String(token)
+    return String(token);
   }
 
-  static checkIfHasAllConstructorParams (ProviderConstructor: Constructor, moduleRef: ModuleRef) {
-    const paramsNames = []
+  static checkIfHasAllConstructorParams(
+    ProviderConstructor: Constructor,
+    moduleRef: ModuleRef
+  ) {
+    const paramsNames = [];
 
-    const providerDependencyList = Reflect.getMetadata(PROVIDER_DEPENDENCIES, ProviderConstructor) || []
-    const currentProviderName = this.getName(ProviderConstructor)
+    const providerDependencyList =
+      Reflect.getMetadata(PROVIDER_DEPENDENCIES, ProviderConstructor) || [];
+    const currentProviderName = this.getName(ProviderConstructor);
 
     for (const provider of providerDependencyList) {
       if (moduleRef.hasProvider(provider.token)) {
-        paramsNames.push(this.getName(provider))
+        paramsNames.push(this.getName(provider));
       } else if (provider.required) {
-        paramsNames.push('?')
-        throw new ProviderNotImportedError(currentProviderName, paramsNames, provider)
+        paramsNames.push("?");
+        throw new ProviderNotImportedError(
+          currentProviderName,
+          paramsNames,
+          provider
+        );
       } else {
-        paramsNames.push('undefined')
+        paramsNames.push("undefined");
       }
     }
   }
@@ -67,7 +81,7 @@ export class ProviderRef<T = any> {
     }
 
     if (ProviderConstructor) {
-      this.checkIfHasAllConstructorParams(ProviderConstructor, moduleRef)
+      this.checkIfHasAllConstructorParams(ProviderConstructor, moduleRef);
       const depsList: {
         index?: number;
         key?: string | symbol;
@@ -82,10 +96,7 @@ export class ProviderRef<T = any> {
 
       for (const item of depsList) {
         if (typeof item.index === "number") {
-          deps.params[item.index] = moduleRef.get(
-            item.token,
-            item.required
-          );
+          deps.params[item.index] = moduleRef.get(item.token, item.required);
         } else if (item.key !== undefined) {
           deps.props[item.key] = moduleRef.get(item.token, item.required);
         }
