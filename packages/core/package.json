@@ -1,7 +1,8 @@
 {
   "name": "@injets/core",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A lightweight dependency injection container for JavaScript/TypeScript",
+  "repository": "https://github.com/salomaosnff/injets",
   "main": "dist/index.js",
   "module": "./dist/esm/index.js",
   "author": "Salomão Neto <salomaosnff@yahoo.com>",

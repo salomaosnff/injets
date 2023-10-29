@@ -1,7 +1,8 @@
 {
   "name": "@injets/functional",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Use injets Dependency Injection with functional factories",
+  "repository": "https://github.com/salomaosnff/injets",
   "main": "dist/index.js",
   "module": "./dist/esm/index.js",
   "author": "Salomão Neto <salomaosnff@yahoo.com>",
