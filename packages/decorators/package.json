@@ -1,0 +1,31 @@
+{
+  "name": "@injets/decorators",
+  "version": "1.0.1",
+  "description": "Use injets Dependency Injection with decorators",
+  "main": "dist/index.js",
+  "module": "./dist/esm/index.js",
+  "author": "Salomão Neto <salomaosnff@yahoo.com>",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "example": "ts-node ./example/index.ts",
+    "build": "tsup src/index.ts --format cjs,esm --dts-resolve --minify --clean --sourcemap --legacy-output --splitting --target es2020 --out-dir dist",
+    "prepublish": "pnpm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@injets/core": "^1.0.0",
+    "reflect-metadata": "^0.1.13"
+  },
+  "devDependencies": {
+    "reflect-metadata": "^0.1.13",
+    "ts-node": "^10.9.1",
+    "tsup": "^7.2.0",
+    "tsx": "^3.14.0",
+    "typescript": "^5.2.2"
+  }
+}
