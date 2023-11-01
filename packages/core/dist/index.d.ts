@@ -160,4 +160,4 @@ declare function providerModeIs<M extends ProviderMode>(provider: {
     mode: M;
 };
 
-export { Class, ClassProvider, Container, ContainerOptions, Delayed, DependencyList, DependencyValues, FactoryProvider, Provider, ProviderMode, Token, TokenValue, ValueProvider, WithExport, WithInject, WithMode, WithToken, delayed, isClassProvider, isFactoryProvider, isValueProvider, providerModeIs, tokenName };
+export { type Class, type ClassProvider, Container, type ContainerOptions, Delayed, type DependencyList, type DependencyValues, type FactoryProvider, type Provider, ProviderMode, type Token, type TokenValue, type ValueProvider, type WithExport, type WithInject, type WithMode, type WithToken, delayed, isClassProvider, isFactoryProvider, isValueProvider, providerModeIs, tokenName };

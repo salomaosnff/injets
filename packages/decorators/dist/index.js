@@ -1,2 +1,97 @@
-"use strict";Object.defineProperty(exports, "__esModule", {value: true}); function _nullishCoalesce(lhs, rhsFn) { if (lhs != null) { return lhs; } else { return rhsFn(); } }require('reflect-metadata');var _core = require('@injets/core');var d=Symbol("mounted"),f=Symbol("provider"),i=Symbol("provider.injects.params"),u=Symbol("options");function O(n={}){return e=>{Reflect.defineProperty(e,u,{value:n}),n.global&&_core.Container.global.import(m(e).container)}}function j(n=_core.ProviderMode.SINGLETON){return e=>{let r={token:e,useFactory:(...o)=>{let t=_nullishCoalesce(Reflect.get(e,i), () => ([])),{properties:s,params:y}=o.reduce((p,l,M)=>{let c=t[M];return c&&(c.key!==void 0&&(p.properties[c.key]=l),c.index!==void 0&&p.params.push(l)),p},{properties:{},params:[]});return Object.assign(new e(...y),s)},mode:n,inject:(_nullishCoalesce(Reflect.get(e,i), () => ([]))).map(({token:o})=>o)};Reflect.defineProperty(e,f,{value:r})}}function C(n){return(e,r,o)=>{if(_nullishCoalesce(n, () => ((n=o!==void 0?Reflect.getMetadata("design:paramtypes",e)[o]:Reflect.getMetadata("design:type",e,r)))),!n)throw new Error(`Missing token for ${_core.tokenName.call(void 0, e.constructor)}#${String(r)}`);let t={token:n},s=_nullishCoalesce(Reflect.get(e,i), () => ([]));s.push(t),o!==void 0&&(t.index=o,Reflect.set(e,i,s)),r!==void 0&&(t.key=r,Reflect.set(e.constructor,i,s))}}function m(n){if(d in n)return Reflect.get(n,d);if(!(u in n))throw new Error(`Missing @Module decorator on ${n.name}`);let e=n[u],r=new (0, _core.Container)({name:n.name,defaultExport:!1,providers:(_nullishCoalesce(e.providers, () => ([]))).map(o=>{let t=Reflect.get(o,f);if(!t)throw new Error(`Missing @Provider decorator on ${n.name}`);return t}),imports:(_nullishCoalesce(e.imports, () => ([]))).map(o=>m(o).container)});for(let o of _nullishCoalesce(e.exports, () => ([])))r.export(o);return Reflect.defineProperty(n,d,{value:{container:r,resolve:(o,t=!0)=>r.resolve(o,t)}}),Reflect.get(n,d)}exports.Container = _core.Container; exports.Inject = C; exports.Module = O; exports.Provider = j; exports.Token = _core.Token; exports.delayed = _core.delayed; exports.mount = m;
-//# sourceMappingURL=index.js.map
+import 'reflect-metadata';
+import { Container, ProviderMode, tokenName } from '@injets/core';
+export { delayed, Container, } from '@injets/core';
+const $MOUNTED = Symbol('mounted');
+const $PROVIDER = Symbol('provider');
+const $INJECTS = Symbol('provider.injects.params');
+const $OPTIONS = Symbol('options');
+export function Module(options = {}) {
+    return (target) => {
+        Reflect.defineProperty(target, $OPTIONS, { value: options });
+        if (options.global) {
+            Container.global.import(mount(target).container);
+        }
+    };
+}
+export function Provider(mode = ProviderMode.SINGLETON) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (target) => {
+        const options = {
+            token: target,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            useFactory: (...deps) => {
+                const injects = Reflect.get(target, $INJECTS) ?? [];
+                const { properties, params, } = deps.reduce((acc, dep, index) => {
+                    const item = injects[index];
+                    if (!item) {
+                        return acc;
+                    }
+                    if (item.key !== undefined) {
+                        acc.properties[item.key] = dep;
+                    }
+                    if (item.index !== undefined) {
+                        acc.params.push(dep);
+                    }
+                    return acc;
+                }, {
+                    properties: {},
+                    params: [],
+                });
+                return Object.assign(new target(...params), properties);
+            },
+            mode,
+            inject: (Reflect.get(target, $INJECTS) ?? []).map(({ token }) => token),
+        };
+        Reflect.defineProperty(target, $PROVIDER, { value: options });
+    };
+}
+export function Inject(token) {
+    return (target, key, index) => {
+        token ??= index !== undefined ? Reflect.getMetadata('design:paramtypes', target)[index] : Reflect.getMetadata('design:type', target, key);
+        if (!token) {
+            throw new Error(`Missing token for ${tokenName(target.constructor)}#${String(key)}`);
+        }
+        const item = { token };
+        const injects = Reflect.get(target, $INJECTS) ?? [];
+        injects.push(item);
+        if (index !== undefined) {
+            item.index = index;
+            Reflect.set(target, $INJECTS, injects);
+        }
+        if (key !== undefined) {
+            item.key = key;
+            Reflect.set(target.constructor, $INJECTS, injects);
+        }
+    };
+}
+export function mount(target) {
+    if ($MOUNTED in target) {
+        return Reflect.get(target, $MOUNTED);
+    }
+    if (!($OPTIONS in target)) {
+        throw new Error(`Missing @Module decorator on ${target.name}`);
+    }
+    const options = target[$OPTIONS];
+    const container = new Container({
+        name: target.name,
+        defaultExport: false,
+        providers: (options.providers ?? []).map((provider) => {
+            const options = Reflect.get(provider, $PROVIDER);
+            if (!options) {
+                throw new Error(`Missing @Provider decorator on ${target.name}`);
+            }
+            return options;
+        }),
+        imports: (options.imports ?? []).map((imported) => mount(imported).container),
+    });
+    for (const exported of options.exports ?? []) {
+        container.export(exported);
+    }
+    Reflect.defineProperty(target, $MOUNTED, {
+        value: {
+            container,
+            resolve: (tokens, includePrivate = true) => container.resolve(tokens, includePrivate),
+        },
+    });
+    return Reflect.get(target, $MOUNTED);
+}

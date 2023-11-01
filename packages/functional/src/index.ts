@@ -1,8 +1,4 @@
-import { Container, DependencyValues, Provider, ProviderMode, Token, TokenValue } from '@injets/core';
-
-export {
-  delayed, Token, Container, 
-} from '@injets/core';
+import { Container, ProviderMode, type DependencyValues, type Provider, type Token, type TokenValue } from '@injets/core';
 
 export interface ResolveFunction<T extends Token = Token> {
   container: Container<T>;

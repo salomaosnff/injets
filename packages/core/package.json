@@ -1,26 +1,36 @@
 {
   "name": "@injets/core",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A lightweight dependency injection container for JavaScript/TypeScript",
   "repository": "https://github.com/salomaosnff/injets",
-  "main": "dist/index.js",
-  "module": "./dist/esm/index.js",
+  "module": "./dist/index.mjs",
   "author": "Salomão Neto <salomaosnff@yahoo.com>",
   "license": "MIT",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
     "example": "tsx ./example/index.ts",
-    "build": "tsup src/index.ts --format cjs,esm --dts-resolve --minify --clean --sourcemap --legacy-output --splitting --target es2020 --out-dir dist",
+    "build": "unbuild",
     "prepublish": "pnpm run build"
   },
   "publishConfig": {
     "access": "public"
   },
+  "peerDependencies": {
+    "@injets/core": "^1.0.0"
+  },
   "devDependencies": {
-    "tsup": "^7.2.0",
     "tsx": "^3.14.0",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "unbuild": "^2.0.0"
   }
 }
