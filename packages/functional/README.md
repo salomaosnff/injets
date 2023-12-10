@@ -11,7 +11,7 @@ npm install @injets/core @injets/functional
 ## Usage
 
 ```typescript
-import { createResolver } from '@injets/functional';
+import { createResolver, depends, transient, singleton, inject } from '@injets/functional';
 
 class MyService {
   constructor(
@@ -24,12 +24,12 @@ class MyService {
 }
 
 
-const useConfig = createResolver('Config', ({ constant }) => {
+const useConfig = createResolver('Config', () => {
   constant('hostname', 'localhost');
   constant('port', 3000);
 })
 
-const useApp = createResolver('App', ({ depends, transient, singleton, inject }) => {
+const useApp = createResolver('App', () => {
   depends(useConfig)
 
   transient('random', () => Math.random());
