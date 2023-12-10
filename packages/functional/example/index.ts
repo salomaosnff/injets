@@ -1,17 +1,13 @@
 import { Token } from '@injets/core';
-import { createResolver, delayed } from '../src';
+import { constant, createResolver, delayed, global, inject, singleton } from '../src';
 
-const useConfigContainer = createResolver('Config', ({
-  constant, global, 
-}) => {
+const useConfigContainer = createResolver('Config', () => {
   global();
   constant('host', 'localhost');
   constant('port', 3000);
 });
 
-const userContainer = createResolver('Example', ({
-  inject, constant, singleton, transient, depends,
-}) => {
+const userContainer = createResolver('Example', () => {
   singleton('teste', () => inject('host' as Token<string>), true);
 });
 
