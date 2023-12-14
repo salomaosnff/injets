@@ -1,13 +1,17 @@
 /** Class type. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Class<T, A extends Readonly<any[]> = any[]> = new (...args: A) => T
+export type Class<T, A extends Readonly<any[]> = any[]> = new (...args: A) => T;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AbstractClass<T, A extends Readonly<any[]> = any[]> = abstract new (...args: A) => T;
+
+export type AnyClass<T> = Class<T> | AbstractClass<T>
 
 /** Token of a provider. */
 // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/no-unused-vars
 export type Token<T = unknown> = {}
 
 /** Value of a token. */
-export type TokenValue<T> = T extends Class<infer U> ? U : T extends Token<infer U> ? U : unknown
+export type TokenValue<T> = T extends AnyClass<infer U> ? U : T extends Token<infer U> ? U : unknown
 
 /** Dependency list of a provider. */
 export type DependencyList<T = Token> = Readonly<T[]>

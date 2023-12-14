@@ -1,6 +1,6 @@
 {
   "name": "@injets/core",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A lightweight dependency injection container for JavaScript/TypeScript",
   "repository": "https://github.com/salomaosnff/injets",
   "module": "./dist/index.mjs",

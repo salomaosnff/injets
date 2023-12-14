@@ -1,9 +1,11 @@
 /** Class type. */
 type Class<T, A extends Readonly<any[]> = any[]> = new (...args: A) => T;
+type AbstractClass<T, A extends Readonly<any[]> = any[]> = abstract new (...args: A) => T;
+type AnyClass<T> = Class<T> | AbstractClass<T>;
 /** Token of a provider. */
 type Token<T = unknown> = {};
 /** Value of a token. */
-type TokenValue<T> = T extends Class<infer U> ? U : T extends Token<infer U> ? U : unknown;
+type TokenValue<T> = T extends AnyClass<infer U> ? U : T extends Token<infer U> ? U : unknown;
 /** Dependency list of a provider. */
 type DependencyList<T = Token> = Readonly<T[]>;
 type DependencyValues<T> = T extends DependencyList ? {
@@ -160,4 +162,4 @@ declare function providerModeIs<M extends ProviderMode>(provider: {
     mode: M;
 };
 
-export { type Class, type ClassProvider, Container, type ContainerOptions, Delayed, type DependencyList, type DependencyValues, type FactoryProvider, type Provider, ProviderMode, type Token, type TokenValue, type ValueProvider, type WithExport, type WithInject, type WithMode, type WithToken, delayed, isClassProvider, isFactoryProvider, isValueProvider, providerModeIs, tokenName };
+export { type AbstractClass, type AnyClass, type Class, type ClassProvider, Container, type ContainerOptions, Delayed, type DependencyList, type DependencyValues, type FactoryProvider, type Provider, ProviderMode, type Token, type TokenValue, type ValueProvider, type WithExport, type WithInject, type WithMode, type WithToken, delayed, isClassProvider, isFactoryProvider, isValueProvider, providerModeIs, tokenName };
