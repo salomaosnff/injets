@@ -1,4 +1,5 @@
 import { Container, ProviderMode } from '@injets/core';
+export { Container, ProviderMode, delayed } from '@injets/core';
 
 let currentContainer = null;
 function getParentContainer() {
@@ -81,7 +82,10 @@ function createResolverFactoryContext(container) {
   };
 }
 function createResolverForContainer(container) {
-  const resolve = (...tokens) => runInContainer(container, () => container.resolve(tokens));
+  const resolve = (tokens) => runInContainer(
+    container,
+    () => container.resolve(tokens)
+  );
   resolve.container = container;
   return resolve;
 }

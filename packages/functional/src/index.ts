@@ -1,8 +1,28 @@
-import { Container, ProviderMode, type DependencyValues, type Provider, type Token, type TokenValue } from '@injets/core';
+export {
+  type Token, Container, ProviderMode, delayed, 
+} from '@injets/core';
+import { Container,
+  ProviderMode,
+  type DependencyValues,
+  type Provider,
+  type Token,
+  type TokenValue } from '@injets/core';
 
 export interface ResolveFunction<T extends Token = Token> {
   container: Container<T>;
-  <const U extends Readonly<T[]>>(...tokens: U): DependencyValues<U>;
+  /**
+   * Resolve all tokens in a dependency list.
+   * @param tokens Dependency list.
+   * @returns Resolved values.
+   */
+  <const U extends Readonly<T[]>>(tokens: U): DependencyValues<U>;
+
+  /**
+   * Resolve a token.
+   * @param token Token to resolve.
+   * @returns Resolved value.
+   */
+  <const U extends T>(token: U): TokenValue<U>;
 }
 
 export interface ResolverFactoryContext {
@@ -55,7 +75,7 @@ export function getParentContainer() {
 
 export function runInContainer<T>(container: Container, cb: () => T) {
   const lastContainer = currentContainer;
-  
+
   currentContainer = container;
 
   const result = cb();
@@ -66,13 +86,14 @@ export function runInContainer<T>(container: Container, cb: () => T) {
 }
 
 export function bindToContainer<A extends any[], R>(fn: (...args: A) => R) {
-  return (...args: A): R => runInContainer(getParentContainer(), () => fn(...args));
+  return (...args: A): R =>
+    runInContainer(getParentContainer(), () => fn(...args));
 }
 
 /**
  * Inject a dependency from the current container.
- * @param token 
- * @returns 
+ * @param token
+ * @returns
  */
 export function inject<T extends Token>(token: T): TokenValue<T> {
   return getParentContainer().resolve(token);
@@ -83,7 +104,9 @@ export function inject<T extends Token>(token: T): TokenValue<T> {
  * @param containersOrResolvers
  * @returns
  */
-export function depends(...containersOrResolvers: Array<ResolveFunction | Container>) {
+export function depends(
+  ...containersOrResolvers: Array<ResolveFunction | Container>
+) {
   const currentContainer = getParentContainer();
 
   for (const resolver of containersOrResolvers) {
@@ -94,7 +117,7 @@ export function depends(...containersOrResolvers: Array<ResolveFunction | Contai
 
     if (
       typeof resolver === 'function' &&
-          resolver.container instanceof Container
+      resolver.container instanceof Container
     ) {
       currentContainer.import(resolver.container);
       continue;
@@ -115,9 +138,9 @@ export function provide<T extends Token>(provider: Provider<T>) {
 
 /**
  * Register a singleton dependency to the current container.
- * @param token 
- * @param factory 
- * @param exportProvider 
+ * @param token
+ * @param factory
+ * @param exportProvider
  */
 export function singleton<T extends Token>(
   token: Token<T>,
@@ -187,7 +210,9 @@ export function global() {
   Container.global.import(container);
 }
 
-function createResolverFactoryContext(container: Container): ResolverFactoryContext {
+function createResolverFactoryContext(
+  container: Container,
+): ResolverFactoryContext {
   return {
     inject,
     global,
@@ -201,9 +226,13 @@ function createResolverFactoryContext(container: Container): ResolverFactoryCont
 }
 
 /** Create a resolver function for a existing container. */
-export function createResolverForContainer<T extends Token>(container: Container<T>): ResolveFunction<T> {
-  const resolve = ((...tokens: T[]) =>
-    runInContainer(container, () => container.resolve(tokens))) as ResolveFunction<T> ;
+export function createResolverForContainer<T extends Token>(
+  container: Container<T>,
+): ResolveFunction<T> {
+  const resolve = ((tokens: T[]) =>
+    runInContainer(container, () =>
+      container.resolve(tokens),
+    )) as ResolveFunction<T>;
 
   resolve.container = container;
 
@@ -211,24 +240,26 @@ export function createResolverForContainer<T extends Token>(container: Container
 }
 /**
  * Create a new container and a resolver function for it.
- * @param name 
- * @param factory 
- * @returns 
+ * @param name
+ * @param factory
+ * @returns
  */
-export function createResolver(name: string, factory: () => void): ResolveFunction;
+export function createResolver(
+  name: string,
+  factory: () => void
+): ResolveFunction;
 
 /**
  * Create a new container and a resolver function for it.
  * @deprecated use factory without context instead.
- * @param name 
- * @param factory 
- * @returns 
+ * @param name
+ * @param factory
+ * @returns
  */
 export function createResolver(
   name: string,
   factory: (context: ResolverFactoryContext) => void
 ): ResolveFunction;
-
 
 export function createResolver(
   name: string,

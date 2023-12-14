@@ -83,7 +83,10 @@ function createResolverFactoryContext(container) {
   };
 }
 function createResolverForContainer(container) {
-  const resolve = (...tokens) => runInContainer(container, () => container.resolve(tokens));
+  const resolve = (tokens) => runInContainer(
+    container,
+    () => container.resolve(tokens)
+  );
   resolve.container = container;
   return resolve;
 }
@@ -95,6 +98,9 @@ function createResolver(name, factory) {
   });
 }
 
+exports.Container = core.Container;
+exports.ProviderMode = core.ProviderMode;
+exports.delayed = core.delayed;
 exports.bindToContainer = bindToContainer;
 exports.constant = constant;
 exports.createResolver = createResolver;

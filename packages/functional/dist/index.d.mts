@@ -1,8 +1,20 @@
 import { Token, Container, DependencyValues, TokenValue, Provider } from '@injets/core';
+export { Container, ProviderMode, Token, delayed } from '@injets/core';
 
 interface ResolveFunction<T extends Token = Token> {
     container: Container<T>;
-    <const U extends Readonly<T[]>>(...tokens: U): DependencyValues<U>;
+    /**
+     * Resolve all tokens in a dependency list.
+     * @param tokens Dependency list.
+     * @returns Resolved values.
+     */
+    <const U extends Readonly<T[]>>(tokens: U): DependencyValues<U>;
+    /**
+     * Resolve a token.
+     * @param token Token to resolve.
+     * @returns Resolved value.
+     */
+    <const U extends T>(token: U): TokenValue<U>;
 }
 interface ResolverFactoryContext {
     /** @deprecated Use `inject` instead. */

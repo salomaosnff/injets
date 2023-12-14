@@ -11,35 +11,56 @@ npm install @injets/core @injets/functional
 ## Usage
 
 ```typescript
-import { createResolver, depends, transient, singleton, inject } from '@injets/functional';
+import {
+  createResolver,
+  Token,
+  depends,
+  transient,
+  constant,
+  singleton,
+  inject
+} from '../src';
 
 class MyService {
-  constructor(
-    private readonly hostname: string,
-  ) {}
+  constructor(private readonly hostname: string) {}
 
   send() {
     console.log('MyService send', this.hostname);
   }
 }
 
+const RANDOM: Token<number> = 'random';
+const CONFIG_HOSTNAME: Token<string> = 'hostname';
+const CONFIG_PORT: Token<number> = 'port';
 
 const useConfig = createResolver('Config', () => {
-  constant('hostname', 'localhost');
-  constant('port', 3000);
-})
+  constant(CONFIG_HOSTNAME, 'localhost');
+  constant(CONFIG_PORT, 3000);
+});
+
 
 const useApp = createResolver('App', () => {
-  depends(useConfig)
+  depends(useConfig);
 
-  transient('random', () => Math.random());
+  transient(RANDOM, () => Math.random());
 
-  singleton(MyService, () => new MyService(inject('hostname')))
-})
+  singleton(MyService, () => new MyService(inject(CONFIG_HOSTNAME)));
+});
 
-const [service, randomValue] = useApp(MyService, 'random');
+// Resolve token
+const val = useApp(RANDOM);
 
-console.log(service, randomValue);
+// Resolve multiple tokens
+const [
+  service,
+  randomValue,
+] = useApp([
+  MyService,
+  RANDOM,
+]);
+
+console.log(service, randomValue, val);
+
 ```
 
 ## API
@@ -49,39 +70,6 @@ console.log(service, randomValue);
 #### `createResolver(name: string, factory: ResolverFactory): Resolver`
 
 Creates a resolver function for all providers defined in the factory.
-
-
-## Options
-
-#### `ResolverFactoryContext`
-
-Resolver factory function context
-
-```typescript
-export interface ResolverFactoryContext {
-  // injects a provider
-  inject<T extends Token>(token: T): TokenValue<T>;
-  // import all exported providers from another container
-  depends(...containersOrResolvers: Array<ResolveFunction | Container>): void;
-  // registers a provider in the container
-  provide<T extends Token>(provider: Provider<T>): void;
-
-  // registers a singleton provider in the container
-  singleton<T extends Token>(token: Token<T>, factory: () => T, exportProvider?: boolean): void;
-
-  // registers a constant value provider in the container
-  constant<T extends Token>(token: Token<T>, value: T, exportProvider?: boolean): void;
-
-  // registers a transient provider in the container
-  transient<T extends Token>(token: Token<T>, factory: () => T, exportProvider?: boolean): void;
-  
-  // registers all exported providers in global container
-  global(): void;
-
-  // container reference
-  readonly container: Container;
-}
-```
 
 ## Other packages
 
