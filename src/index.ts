@@ -184,7 +184,6 @@ class Lazy<T> {
     for (const method of PROXY_HANDLE_KEYS) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       handler[method] = (_: any, ...args: any[]) => {
-        console.log('Proxy trap called for method:', method);
         const cyclicIndex = resolveStack.findIndex(([c, t]) => c === container && t === parentToken);
         if (cyclicIndex >= 0) {
           const stack = resolveStack.map(([
