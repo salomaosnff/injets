@@ -2,6 +2,8 @@
   "compilerOptions": {
     "target": "ES2022",
     "strict": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "module": "ES2022"
   }
 }
