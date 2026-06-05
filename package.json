@@ -1,6 +1,6 @@
 {
   "name": "@injets/functional",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Use injets Dependency Injection with functional factories",
   "repository": "git+https://github.com/salomaosnff/injets.git",
   "author": "Salomão Neto <salomaosnff@yahoo.com>",
